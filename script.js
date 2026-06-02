@@ -1,11 +1,26 @@
+// مفاتيح الربط الخاصة بمشروعك (انس، احمد خزعل)
+const firebaseConfig = {
+    apiKey: "AIzaSyCWL3DohN_BVmwlDjLYP_UohoKqnw4ylzU",
+    authDomain: "chessroom-ca23f.firebaseapp.com",
+    databaseURL: "https://chessroom-ca23f-default-rtdb.firebaseio.com", // إذا لم تتزامن اللعبة، تأكد من هذا الرابط من لوحة تحكم Realtime Database لديك
+    projectId: "chessroom-ca23f",
+    storageBucket: "chessroom-ca23f.firebasestorage.app",
+    messagingSenderId: "1030607242972",
+    appId: "1:1030607242972:web:dfcdb53525a354dc991619"
+};
+
+// تشغيل السيرفر بالطريقة الكلاسيكية الآمنة للمتصفحات
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
 $(document).ready(function() {
     var game = new Chess();
     var board = null;
     var whiteSeconds = 0, blackSeconds = 0, incrementSeconds = 0;
     var timerInterval = null, selectedSquare = null, gameStarted = false;
-    var userColorSelection = 'random';
     var premoveQueue = []; 
+    var currentRoomId = null;
+    var myPlayerColor = 'white'; // سيتم تحديده ديناميكياً أونلاين
 
     const sfx = {
         move: new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3'),
@@ -20,8 +35,8 @@ $(document).ready(function() {
     var currentTheme = localStorage.getItem('chessTheme') || 'silver';
 
     var translations = {
-        ar: { lobbyTitle: "تخصيص المباراة", labelMinutes: "الوقت بالدقائق", labelIncrement: "الزيادة بالثواني", labelColor: "اختيار اللون", colorRandom: "عشوائي", colorWhite: "أبيض", colorBlack: "أسود", labelTheme: "ثيم الموقع", themeChesscom: "كلاسيكي", themeSilver: "النيلي والفضي الاحترافي", btnEnter: "دخول المباراة", playerOpponent: "الخصم", playerYou: "أنت", btnResign: "انسحاب", btnCopy: "نسخ PGN", btnRematch: "إعادة التحدي", btnHome: "القائمة الرئيسية", msgCountdownStart: "ابدأ", msgWhiteWinTime: "انتهى الوقت، فوز اللاعب الأسود", msgBlackWinTime: "انتهى الوقت، فوز اللاعب الأبيض", msgResignWin: "انسحاب، فوز اللاعب ", msgCheckmateWin: "كش مات، فوز اللاعب ", msgDraw: "تعادل", msgStalemate: "تعادل بسبب وضع الخنق", msgConfirmResign: "تأكيد الانسحاب؟", msgNoMoves: "لا توجد نقلات لنسخها", msgCopySuccess: "تم نسخ النقلات بنجاح" },
-        en: { lobbyTitle: "Match Setup", labelMinutes: "Minutes", labelIncrement: "Increment (Sec)", labelColor: "Color", colorRandom: "Random", colorWhite: "White", colorBlack: "Black", labelTheme: "Site Theme", themeChesscom: "Classic", themeSilver: "Navy & Silver Pro", btnEnter: "Enter Match", playerOpponent: "Opponent", playerYou: "You", btnResign: "Resign", btnCopy: "Copy PGN", btnRematch: "Rematch", btnHome: "Main Menu", msgCountdownStart: "Start", msgWhiteWinTime: "Time out, Black wins", msgBlackWinTime: "Time out, White wins", msgResignWin: "Resignation, victory for ", msgCheckmateWin: "Checkmate, victory for ", msgDraw: "Draw", msgStalemate: "Draw by stalemate", msgConfirmResign: "Confirm resignation?", msgNoMoves: "No moves to copy", msgCopySuccess: "Moves copied successfully" }
+        ar: { lobbyTitle: "تخصيص المباراة", labelRoom: "رقم الغرفة", labelMinutes: "الوقت بالدقائق", labelIncrement: "الزيادة بالثواني", labelColor: "اختر لونك", colorRandom: "عشوائي", colorWhite: "أبيض", colorBlack: "أسود", labelTheme: "ثيم الموقع", themeChesscom: "كلاسيكي", themeSilver: "النيلي والفضي الاحترافي", btnEnter: "دخول الغرفة", playerOpponent: "الخصم", playerYou: "أنت", btnResign: "انسحاب", btnCopy: "نسخ PGN", btnHome: "القائمة الرئيسية", msgCountdownStart: "ابدأ", msgWhiteWinTime: "انتهى الوقت، فوز اللاعب الأسود", msgBlackWinTime: "انتهى الوقت، فوز اللاعب الأبيض", msgResignWin: "انسحاب، فوز اللاعب ", msgCheckmateWin: "كش مات، فوز اللاعب ", msgDraw: "تعادل", msgStalemate: "تعادل بسبب وضع الخنق", msgConfirmResign: "تأكيد الانسحاب؟", msgNoMoves: "لا توجد نقلات لنسخها", msgCopySuccess: "تم نسخ النقلات بنجاح" },
+        en: { lobbyTitle: "Match Setup", labelRoom: "Room ID", labelMinutes: "Minutes", labelIncrement: "Increment (Sec)", labelColor: "Your Color", colorRandom: "Random", colorWhite: "White", colorBlack: "Black", labelTheme: "Site Theme", themeChesscom: "Classic", themeSilver: "Navy & Silver Pro", btnEnter: "Enter Room", playerOpponent: "Opponent", playerYou: "You", btnResign: "Resign", btnCopy: "Copy PGN", btnHome: "Main Menu", msgCountdownStart: "Start", msgWhiteWinTime: "Time out, Black wins", msgBlackWinTime: "Time out, White wins", msgResignWin: "Resignation, victory for ", msgCheckmateWin: "Checkmate, victory for ", msgDraw: "Draw", msgStalemate: "Draw by stalemate", msgConfirmResign: "Confirm resignation?", msgNoMoves: "No moves to copy", msgCopySuccess: "Moves copied successfully" }
     };
 
     function applyLanguage(lang) {
@@ -34,11 +49,14 @@ $(document).ready(function() {
     $('#langToggleBtn').click(function() { applyLanguage(currentLang === 'en' ? 'ar' : 'en'); if(board) board.resize(); });
     $('#themeChoice').change(function() { applyTheme($(this).val()); });
     document.getElementById('board').addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+    $(document).on('contextmenu', '#board', function(e) { e.preventDefault(); cancelPremoves(); });
 
     function formatTime(totalSeconds) { let m = Math.floor(totalSeconds / 60); let s = totalSeconds % 60; return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s; }
+    
     function updateTimersDisplay() {
-        let myColor = board.orientation(); let oppColor = myColor === 'white' ? 'black' : 'white';
-        let mySeconds = myColor === 'white' ? whiteSeconds : blackSeconds; let oppSeconds = oppColor === 'white' ? whiteSeconds : blackSeconds;
+        let oppColor = myPlayerColor === 'white' ? 'black' : 'white';
+        let mySeconds = myPlayerColor === 'white' ? whiteSeconds : blackSeconds; 
+        let oppSeconds = oppColor === 'white' ? whiteSeconds : blackSeconds;
         $('#bottomTimer').text(formatTime(mySeconds)); $('#topTimer').text(formatTime(oppSeconds));
         if(mySeconds <= 20) $('#bottomTimer').addClass('danger'); else $('#bottomTimer').removeClass('danger');
         if(oppSeconds <= 20) $('#topTimer').addClass('danger'); else $('#topTimer').removeClass('danger');
@@ -48,12 +66,18 @@ $(document).ready(function() {
         if(timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(function() {
             if (!gameStarted || game.game_over()) return;
-            if (game.turn() === 'w') { whiteSeconds--; if (whiteSeconds <= 0) endGame(translations[currentLang].msgWhiteWinTime); } else { blackSeconds--; if (blackSeconds <= 0) endGame(translations[currentLang].msgBlackWinTime); }
+            if (game.turn() === 'w') { whiteSeconds--; if (whiteSeconds <= 0) endGame(translations[currentLang].msgWhiteWinTime); } 
+            else { blackSeconds--; if (blackSeconds <= 0) endGame(translations[currentLang].msgBlackWinTime); }
             updateTimersDisplay();
         }, 1000);
     }
 
-    function updateActiveTimerStyle() { let turn = game.turn(); let myColor = board.orientation(); if ( (turn === 'w' && myColor === 'white') || (turn === 'b' && myColor === 'black') ) { $('#bottomTimer').addClass('active'); $('#topTimer').removeClass('active'); } else { $('#topTimer').addClass('active'); $('#bottomTimer').removeClass('active'); } }
+    function updateActiveTimerStyle() { 
+        let turn = game.turn(); 
+        if (turn === myPlayerColor.charAt(0)) { $('#bottomTimer').addClass('active'); $('#topTimer').removeClass('active'); } 
+        else { $('#topTimer').addClass('active'); $('#bottomTimer').removeClass('active'); } 
+    }
+    
     function stopTimer() { if(timerInterval) clearInterval(timerInterval); $('.timer').removeClass('active'); }
 
     function runCountdown(callback) {
@@ -66,35 +90,104 @@ $(document).ready(function() {
         }, 1000);
     }
 
-    function startMatch() {
-        game.reset(); board.start(false);
-        if(userColorSelection === 'random') board.orientation(Math.random() >= 0.5 ? 'white' : 'black'); else board.orientation(userColorSelection);
-        $('#movesHistory').text(''); clearHighlights(); selectedSquare = null; premoveQueue = [];
-        let minutes = parseInt($('#timeMinutes').val()) || 3; incrementSeconds = parseInt($('#timeIncrement').val()) || 0;
-        whiteSeconds = minutes * 60; blackSeconds = minutes * 60;
-        updateTimersDisplay(); $('#endGameActions').hide(); $('#resignBtn').show(); $('.timer').removeClass('active');
-        gameStarted = false; runCountdown(() => { gameStarted = true; updateActiveTimerStyle(); startTimer(); });
-    }
+    // منطق إنشاء الغرف والتحكم باللون العشوائي أونلاين
+    $('#createBtn').click(function() { 
+        currentRoomId = $('#roomId').val().trim();
+        if (!currentRoomId) { alert(currentLang === 'ar' ? 'أدخل رقم الغرفة أولاً!' : 'Please enter a Room ID!'); return; }
+        
+        let selectedColor = $('#colorChoice').val();
+        
+        const roomRef = db.ref('rooms/' + currentRoomId);
+        
+        roomRef.once('value').then(function(snapshot) {
+            if (!snapshot.exists()) {
+                // 1. أنت منشئ الغرفة (اللاعب الأول)
+                if (selectedColor === 'random') {
+                    myPlayerColor = Math.random() >= 0.5 ? 'white' : 'black';
+                } else {
+                    myPlayerColor = selectedColor;
+                }
+                
+                game.reset();
+                let minutes = parseInt($('#timeMinutes').val()) || 3; 
+                incrementSeconds = parseInt($('#timeIncrement').val()) || 0;
+                whiteSeconds = minutes * 60; blackSeconds = minutes * 60;
+                
+                roomRef.set({
+                    fen: game.fen(), pgn: game.pgn(),
+                    whiteSeconds: whiteSeconds, blackSeconds: blackSeconds,
+                    increment: incrementSeconds, creatorColor: myPlayerColor
+                });
+            } else {
+                // 2. أنت اللاعب الثاني (المنضم للغرفة)
+                let data = snapshot.val();
+                myPlayerColor = data.creatorColor === 'white' ? 'black' : 'white'; // عكس لون المنشئ إجبارياً
+                
+                game.load(data.fen);
+                whiteSeconds = data.whiteSeconds;
+                blackSeconds = data.blackSeconds;
+                incrementSeconds = data.increment;
+            }
 
-    $('#createBtn').click(function() { userColorSelection = $('#colorChoice').val(); $('#lobby').hide(); $('#gameArea').fadeIn(); board.resize(); startMatch(); });
-    $('#resignBtn').click(function() { if (!gameStarted || game.game_over()) return; let winnerText = board.orientation() === 'white' ? (currentLang === 'ar' ? 'الأسود' : 'Black') : (currentLang === 'ar' ? 'الأبيض' : 'White'); if(confirm(translations[currentLang].msgConfirmResign)) endGame(translations[currentLang].msgResignWin + winnerText); });
-    $('#rematchBtn').click(function() { startMatch(); });
-    $('#homeBtn').click(function() { stopTimer(); $('#gameArea').hide(); $('#lobby').fadeIn(); });
-    $('#copyPgnBtn').click(function() { let pgnData = game.pgn(); if (!pgnData) { alert(translations[currentLang].msgNoMoves); return; } var textArea = document.createElement("textarea"); textArea.value = pgnData; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); alert(translations[currentLang].msgCopySuccess); document.body.removeChild(textArea); });
+            // إعداد رقعة اللعب بناءً على الدور المقفل
+            $('#lobby').hide(); $('#gameArea').fadeIn(); board.resize(); 
+            board.orientation(myPlayerColor);
+            board.start(false);
+            if(game.fen() !== 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1') board.position(game.fen());
+
+            $('#movesHistory').text(game.pgn()); clearHighlights(); selectedSquare = null; premoveQueue = [];
+            updateTimersDisplay(); $('#endGameActions').hide(); $('#resignBtn').show(); $('.timer').removeClass('active');
+            gameStarted = false; 
+            
+            runCountdown(() => { gameStarted = true; updateActiveTimerStyle(); startTimer(); });
+
+            // الاستماع اللحظي لنقلات الخصم عبر الإنترنت
+            roomRef.on('value', function(snap) {
+                let data = snap.val();
+                if (data && data.fen !== game.fen()) {
+                    game.load(data.fen); board.position(data.fen);
+                    sfx.move.play().catch(()=>{});
+                    whiteSeconds = data.whiteSeconds; blackSeconds = data.blackSeconds;
+                    updateTimersDisplay(); updateActiveTimerStyle();
+                    $('#movesHistory').text(data.pgn);
+                    var movesBox = document.getElementById("movesHistory"); movesBox.scrollTop = movesBox.scrollHeight;
+                    
+                    if (game.in_checkmate() || game.in_draw() || game.in_stalemate()) { handleGameEndScenarios(); return; } 
+                    else if (game.in_check()) { sfx.check.play().catch(()=>{}); if (navigator.vibrate) navigator.vibrate([50, 50, 100]); }
+                    
+                    executeNextPremove();
+                }
+            });
+        });
+    });
+
+    $('#resignBtn').click(function() { 
+        if (!gameStarted || game.game_over()) return; 
+        let winnerText = myPlayerColor === 'white' ? (currentLang === 'ar' ? 'الأسود' : 'Black') : (currentLang === 'ar' ? 'الأبيض' : 'White'); 
+        if(confirm(translations[currentLang].msgConfirmResign)) endGame(translations[currentLang].msgResignWin + winnerText); 
+    });
+    
+    $('#homeBtn').click(function() { stopTimer(); $('#gameArea').hide(); $('#lobby').fadeIn(); db.ref('rooms/' + currentRoomId).off(); });
+
+    function handleGameEndScenarios() {
+        if (game.in_checkmate()) {
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]); 
+            let winnerText = game.turn() === 'w' ? (currentLang === 'ar' ? 'الأسود' : 'Black') : (currentLang === 'ar' ? 'الأبيض' : 'White');
+            endGame(translations[currentLang].msgCheckmateWin + winnerText);
+        } else if (game.in_draw()) { endGame(translations[currentLang].msgDraw); } 
+        else if (game.in_stalemate()) { endGame(translations[currentLang].msgStalemate); }
+    }
 
     function endGame(message) { gameStarted = false; stopTimer(); $('#resignBtn').hide(); $('#endGameActions').css('display', 'flex').hide().fadeIn(); sfx.gameEnd.play().catch(()=>{}); setTimeout(() => { alert(message); }, 50); }
 
     function getVirtualGame() {
         let vGame = new Chess(game.fen());
-        let myColor = board.orientation().charAt(0);
         for (let i = 0; i < premoveQueue.length; i++) {
             let p = premoveQueue[i];
-            let tokens = vGame.fen().split(' ');
-            tokens[1] = myColor; tokens[3] = '-'; vGame.load(tokens.join(' '));
+            let tokens = vGame.fen().split(' '); tokens[1] = myPlayerColor.charAt(0); tokens[3] = '-'; vGame.load(tokens.join(' '));
             vGame.move({from: p.from, to: p.to, promotion: 'q'});
         }
-        let tokens = vGame.fen().split(' ');
-        tokens[1] = myColor; tokens[3] = '-'; vGame.load(tokens.join(' '));
+        let tokens = vGame.fen().split(' '); tokens[1] = myPlayerColor.charAt(0); tokens[3] = '-'; vGame.load(tokens.join(' '));
         return vGame;
     }
 
@@ -112,101 +205,100 @@ $(document).ready(function() {
     function clearHighlights () { $('#board .square-55d63').removeClass('highlight legal-move legal-move-capture'); }
 
     function highlightLegalMoves(square, gameInstance) {
-        clearHighlights();
-        var moves = gameInstance.moves({ square: square, verbose: true });
+        clearHighlights(); var moves = gameInstance.moves({ square: square, verbose: true });
         if (moves.length === 0) return;
         $('#board .square-' + square).addClass('highlight');
-        for (var i = 0; i < moves.length; i++) {
-            var targetSquare = $('#board .square-' + moves[i].to);
-            if(moves[i].captured) targetSquare.addClass('legal-move-capture'); else targetSquare.addClass('legal-move');
-        }
+        for (var i = 0; i < moves.length; i++) { var targetSquare = $('#board .square-' + moves[i].to); if(moves[i].captured) targetSquare.addClass('legal-move-capture'); else targetSquare.addClass('legal-move'); }
     }
 
-    function handleMoveCompleted(move) {
+    function handleMoveCompleted(move, isMyLocalMove) {
         if (move.captured) sfx.capture.play().catch(()=>{}); else sfx.move.play().catch(()=>{});
         if (move.color === 'w') whiteSeconds += incrementSeconds; else blackSeconds += incrementSeconds;
         
         updateTimersDisplay(); updateActiveTimerStyle(); startTimer();
         $('#movesHistory').text(game.pgn()); var movesBox = document.getElementById("movesHistory"); movesBox.scrollTop = movesBox.scrollHeight;
 
-        if (game.in_checkmate()) {
-            if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]); 
-            let winnerText = game.turn() === 'w' ? (currentLang === 'ar' ? 'الأسود' : 'Black') : (currentLang === 'ar' ? 'الأبيض' : 'White');
-            endGame(translations[currentLang].msgCheckmateWin + winnerText); return;
-        } else if (game.in_draw()) { endGame(translations[currentLang].msgDraw); return; } 
-        else if (game.in_stalemate()) { endGame(translations[currentLang].msgStalemate); return; } 
-        else if (game.in_check()) { sfx.check.play().catch(()=>{}); if (navigator.vibrate) navigator.vibrate([50, 50, 100]); }
+        if (isMyLocalMove) {
+            db.ref('rooms/' + currentRoomId).update({
+                fen: game.fen(), pgn: game.pgn(),
+                whiteSeconds: whiteSeconds, blackSeconds: blackSeconds
+            });
+        }
 
+        handleGameEndScenarios();
+        if (game.in_check() && !game.game_over()) { sfx.check.play().catch(()=>{}); if (navigator.vibrate) navigator.vibrate([50, 50, 100]); }
         executeNextPremove();
     }
 
     function executeNextPremove() {
-        let myColor = board.orientation().charAt(0);
-        if (premoveQueue.length > 0 && game.turn() === myColor && !game.game_over()) {
+        if (premoveQueue.length > 0 && game.turn() === myPlayerColor.charAt(0) && !game.game_over()) {
             let p = premoveQueue.shift();
             let move = game.move({ from: p.from, to: p.to, promotion: 'q' });
-            if (move) { setTimeout(function() { updateBoardVisuals(); handleMoveCompleted(move); }, 50); } 
+            if (move) { setTimeout(function() { updateBoardVisuals(); handleMoveCompleted(move, true); }, 50); } 
             else { cancelPremoves(); }
         }
     }
 
+    // نظام النقر المقفل والصارم للونك فقط
     $(document).on('click', '#board .square-55d63', function() {
         if (!gameStarted || game.game_over()) return;
         var square = $(this).attr('data-square');
-        var myColor = board.orientation().charAt(0);
+        var myColorCode = myPlayerColor.charAt(0);
         var vGame = getVirtualGame();
 
         if (selectedSquare) {
-            if (premoveQueue.length === 0 && game.turn() === vGame.get(selectedSquare).color) {
-                var move = game.move({ from: selectedSquare, to: square, promotion: 'q' });
-                if (move) { board.position(game.fen()); clearHighlights(); selectedSquare = null; handleMoveCompleted(move); return; }
-            } 
-            else if (vGame.get(selectedSquare).color === myColor) {
-                let moves = vGame.moves({square: selectedSquare, verbose: true});
-                if (moves.some(m => m.to === square)) {
-                    premoveQueue.push({ from: selectedSquare, to: square });
-                    clearHighlights(); updateBoardVisuals(); selectedSquare = null; return;
+            let selectedPiece = vGame.get(selectedSquare);
+            if (selectedPiece && selectedPiece.color === myColorCode) {
+                if (premoveQueue.length === 0 && game.turn() === myColorCode) {
+                    var move = game.move({ from: selectedSquare, to: square, promotion: 'q' });
+                    if (move) { board.position(game.fen()); clearHighlights(); selectedSquare = null; handleMoveCompleted(move, true); return; }
+                } else {
+                    let moves = vGame.moves({square: selectedSquare, verbose: true});
+                    if (moves.some(m => m.to === square)) {
+                        premoveQueue.push({ from: selectedSquare, to: square });
+                        clearHighlights(); updateBoardVisuals(); selectedSquare = null; return;
+                    }
                 }
             }
             cancelPremoves(); clearHighlights(); selectedSquare = null;
         }
         
         var vPiece = vGame.get(square);
-        if (vPiece) {
-            if (premoveQueue.length === 0 && vPiece.color === game.turn()) { selectedSquare = square; highlightLegalMoves(square, vGame); } 
-            else if (vPiece.color === myColor) { selectedSquare = square; highlightLegalMoves(square, vGame); } 
-            else { cancelPremoves(); clearHighlights(); }
-        } else { cancelPremoves(); clearHighlights(); }
+        if (vPiece && vPiece.color === myColorCode) {
+            selectedSquare = square; highlightLegalMoves(square, vGame);
+        } else { cancelPremoves(); clearHighlights(); selectedSquare = null; }
     });
 
+    // نظام السحب والإفلات الصارم (يمنع غش ولمس قطع الخصم نهائياً)
     function onDragStart (source, piece) {
         if (!gameStarted || game.game_over()) return false;
-        var myColor = board.orientation().charAt(0);
+        var myColorCode = myPlayerColor.charAt(0);
         var vGame = getVirtualGame();
         var vPiece = vGame.get(source);
-        if (!vPiece) return false;
+        
+        if (!vPiece || vPiece.color !== myColorCode) return false; // حظر فوري إذا سحبت قطعة الخصم!
 
-        if (premoveQueue.length === 0 && vPiece.color === game.turn()) { selectedSquare = source; highlightLegalMoves(source, vGame); return true; }
-        if (vPiece.color === myColor) { selectedSquare = source; highlightLegalMoves(source, vGame); return true; }
-        return false;
+        selectedSquare = source; highlightLegalMoves(source, vGame); return true;
     }
 
     function onDrop (source, target) {
         if (source === target) return 'snapback'; 
         clearHighlights();
-        var myColor = board.orientation().charAt(0);
+        var myColorCode = myPlayerCode = myPlayerColor.charAt(0);
         var vGame = getVirtualGame();
+        var piece = vGame.get(source);
         
-        if (premoveQueue.length === 0 && game.turn() === vGame.get(source).color) {
+        if (!piece || piece.color !== myColorCode) return 'snapback';
+
+        if (premoveQueue.length === 0 && game.turn() === myColorCode) {
             var move = game.move({ from: source, to: target, promotion: 'q' });
             if (move === null) { selectedSquare = null; return 'snapback'; }
-            selectedSquare = null; handleMoveCompleted(move); return;
-        } 
-        else if (vGame.get(source).color === myColor) {
+            selectedSquare = null; handleMoveCompleted(move, true); return;
+        } else {
             let moves = vGame.moves({square: source, verbose: true});
             if (moves.some(m => m.to === target)) {
                 premoveQueue.push({from: source, to: target});
-                updateBoardVisuals(); selectedSquare = null; return;
+                updateBoardVisuals(); selectedSquare = null; return 'snapback';
             }
         }
         cancelPremoves(); selectedSquare = null; return 'snapback';
@@ -219,7 +311,6 @@ $(document).ready(function() {
         moveSpeed: 100, snapbackSpeed: 100, snapSpeed: 50, pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
     };
     
-    board = Chessboard('board', config);
-    $(window).resize(board.resize);
+    board = Chessboard('board', config); $(window).resize(board.resize);
     applyLanguage(currentLang); applyTheme(currentTheme);
 });
