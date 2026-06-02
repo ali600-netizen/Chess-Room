@@ -1,8 +1,8 @@
-// مفاتيح الربط الخاصة بمشروعك (انس، احمد خزعل)
+          // مفاتيح الربط الخاصة بمشروعك مع رابط قاعدة البيانات الصحيح
 const firebaseConfig = {
     apiKey: "AIzaSyCWL3DohN_BVmwlDjLYP_UohoKqnw4ylzU",
     authDomain: "chessroom-ca23f.firebaseapp.com",
-    databaseURL: "https://chessroom-ca23f-default-rtdb.firebaseio.com", // إذا لم تتزامن اللعبة، تأكد من هذا الرابط من لوحة تحكم Realtime Database لديك
+    databaseURL: "https://chessroom-ca23f-default-rtdb.firebaseio.com/", // تم وضع رابطك هنا بنجاح
     projectId: "chessroom-ca23f",
     storageBucket: "chessroom-ca23f.firebasestorage.app",
     messagingSenderId: "1030607242972",
@@ -20,7 +20,7 @@ $(document).ready(function() {
     var timerInterval = null, selectedSquare = null, gameStarted = false;
     var premoveQueue = []; 
     var currentRoomId = null;
-    var myPlayerColor = 'white'; // سيتم تحديده ديناميكياً أونلاين
+    var myPlayerColor = 'white';
 
     const sfx = {
         move: new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3'),
@@ -90,18 +90,20 @@ $(document).ready(function() {
         }, 1000);
     }
 
-    // منطق إنشاء الغرف والتحكم باللون العشوائي أونلاين
     $('#createBtn').click(function() { 
         currentRoomId = $('#roomId').val().trim();
         if (!currentRoomId) { alert(currentLang === 'ar' ? 'أدخل رقم الغرفة أولاً!' : 'Please enter a Room ID!'); return; }
         
         let selectedColor = $('#colorChoice').val();
         
+        let btn = $(this);
+        let originalText = btn.text();
+        btn.text(currentLang === 'ar' ? 'جاري الاتصال بالسيرفر...' : 'Connecting...').prop('disabled', true);
+        
         const roomRef = db.ref('rooms/' + currentRoomId);
         
         roomRef.once('value').then(function(snapshot) {
             if (!snapshot.exists()) {
-                // 1. أنت منشئ الغرفة (اللاعب الأول)
                 if (selectedColor === 'random') {
                     myPlayerColor = Math.random() >= 0.5 ? 'white' : 'black';
                 } else {
@@ -119,9 +121,8 @@ $(document).ready(function() {
                     increment: incrementSeconds, creatorColor: myPlayerColor
                 });
             } else {
-                // 2. أنت اللاعب الثاني (المنضم للغرفة)
                 let data = snapshot.val();
-                myPlayerColor = data.creatorColor === 'white' ? 'black' : 'white'; // عكس لون المنشئ إجبارياً
+                myPlayerColor = data.creatorColor === 'white' ? 'black' : 'white'; 
                 
                 game.load(data.fen);
                 whiteSeconds = data.whiteSeconds;
@@ -129,7 +130,6 @@ $(document).ready(function() {
                 incrementSeconds = data.increment;
             }
 
-            // إعداد رقعة اللعب بناءً على الدور المقفل
             $('#lobby').hide(); $('#gameArea').fadeIn(); board.resize(); 
             board.orientation(myPlayerColor);
             board.start(false);
@@ -141,7 +141,6 @@ $(document).ready(function() {
             
             runCountdown(() => { gameStarted = true; updateActiveTimerStyle(); startTimer(); });
 
-            // الاستماع اللحظي لنقلات الخصم عبر الإنترنت
             roomRef.on('value', function(snap) {
                 let data = snap.val();
                 if (data && data.fen !== game.fen()) {
@@ -158,6 +157,11 @@ $(document).ready(function() {
                     executeNextPremove();
                 }
             });
+            
+            btn.text(originalText).prop('disabled', false); 
+        }).catch(function(error) {
+            alert((currentLang === 'ar' ? "فشل الاتصال بالسيرفر! السبب: " : "Connection Failed! Reason: ") + error.message);
+            btn.text(originalText).prop('disabled', false);
         });
     });
 
@@ -239,7 +243,6 @@ $(document).ready(function() {
         }
     }
 
-    // نظام النقر المقفل والصارم للونك فقط
     $(document).on('click', '#board .square-55d63', function() {
         if (!gameStarted || game.game_over()) return;
         var square = $(this).attr('data-square');
@@ -269,14 +272,13 @@ $(document).ready(function() {
         } else { cancelPremoves(); clearHighlights(); selectedSquare = null; }
     });
 
-    // نظام السحب والإفلات الصارم (يمنع غش ولمس قطع الخصم نهائياً)
     function onDragStart (source, piece) {
         if (!gameStarted || game.game_over()) return false;
         var myColorCode = myPlayerColor.charAt(0);
         var vGame = getVirtualGame();
         var vPiece = vGame.get(source);
         
-        if (!vPiece || vPiece.color !== myColorCode) return false; // حظر فوري إذا سحبت قطعة الخصم!
+        if (!vPiece || vPiece.color !== myColorCode) return false; 
 
         selectedSquare = source; highlightLegalMoves(source, vGame); return true;
     }
@@ -284,7 +286,7 @@ $(document).ready(function() {
     function onDrop (source, target) {
         if (source === target) return 'snapback'; 
         clearHighlights();
-        var myColorCode = myPlayerCode = myPlayerColor.charAt(0);
+        var myColorCode = myPlayerColor.charAt(0);
         var vGame = getVirtualGame();
         var piece = vGame.get(source);
         
@@ -314,3 +316,4 @@ $(document).ready(function() {
     board = Chessboard('board', config); $(window).resize(board.resize);
     applyLanguage(currentLang); applyTheme(currentTheme);
 });
+  
