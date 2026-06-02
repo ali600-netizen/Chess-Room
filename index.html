@@ -7,12 +7,9 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    
-    <link rel="stylesheet" href="style.css">
-</head>
+    <link rel="stylesheet" href="style.css"> </head>
 <body class="theme-silver">
     <div class="container">
-        
         <div class="top-bar">
             <button id="langToggleBtn" class="lang-btn">العربية</button>
         </div>
@@ -22,6 +19,11 @@
         <div id="lobby" class="panel">
             <h3 data-key="lobbyTitle">Match Setup</h3>
             
+            <div class="form-group">
+                <label data-key="labelRoom">Room ID</label>
+                <input type="text" id="roomId" placeholder="e.g. 1234">
+            </div>
+
             <div class="form-group">
                 <label data-key="labelMinutes">Minutes</label>
                 <input type="number" id="timeMinutes" value="3" min="1" max="180">
@@ -33,9 +35,8 @@
             </div>
             
             <div class="form-group">
-                <label data-key="labelColor">Color</label>
+                <label data-key="labelColor">Your Color</label>
                 <select id="colorChoice">
-                    <option value="random" data-key="colorRandom">Random</option>
                     <option value="white" data-key="colorWhite">White</option>
                     <option value="black" data-key="colorBlack">Black</option>
                 </select>
@@ -74,7 +75,6 @@
             
             <div id="endGameActions" class="action-buttons" style="display: none;">
                 <button id="copyPgnBtn" class="btn btn-secondary" data-key="btnCopy">Copy PGN</button>
-                <button id="rematchBtn" class="btn" data-key="btnRematch">Rematch</button>
                 <button id="homeBtn" class="btn btn-danger" data-key="btnHome">Main Menu</button>
             </div>
         </div>
@@ -84,6 +84,6 @@
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
