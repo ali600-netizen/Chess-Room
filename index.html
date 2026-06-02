@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Room - Online Edition</title>
+    <title>Chess Room - Online Pro</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
@@ -11,6 +11,7 @@
     
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body class="theme-silver">
     <div class="container">
@@ -41,7 +42,8 @@
             <div class="form-group">
                 <label data-key="labelColor">Your Color</label>
                 <select id="colorChoice">
-                    <option value="random" data-key="colorRandom">Random</option> <option value="white" data-key="colorWhite">White</option>
+                    <option value="random" data-key="colorRandom">Random</option>
+                    <option value="white" data-key="colorWhite">White</option>
                     <option value="black" data-key="colorBlack">Black</option>
                 </select>
             </div>
@@ -64,7 +66,18 @@
             </div>
             
             <div class="board-wrapper">
-                <div id="countdownOverlay" class="countdown-overlay" style="display: none;">3</div>
+                <div id="waitingOverlay" class="status-overlay" style="display: none;">
+                    <div class="spinner"></div>
+                    <span data-key="msgWaiting">Waiting for opponent...</span>
+                </div>
+                <div id="countdownOverlay" class="status-overlay" style="display: none;">3</div>
+                <div id="rematchOfferOverlay" class="status-overlay" style="display: none;">
+                    <span data-key="msgRematchOffer" style="font-size:1.5rem; margin-bottom:15px;">Opponent offered a rematch!</span>
+                    <div style="display:flex; gap:10px;">
+                        <button id="acceptRematchBtn" class="btn" data-key="btnAccept">Accept</button>
+                    </div>
+                </div>
+
                 <div id="board" style="width: 100%;"></div>
             </div>
 
@@ -77,11 +90,11 @@
             
             <button id="resignBtn" class="btn btn-danger" data-key="btnResign">Resign</button>
             
-                        <div id="endGameActions" class="action-buttons" style="display: none;">
+            <div id="endGameActions" class="action-buttons" style="display: none;">
                 <button id="copyPgnBtn" class="btn btn-secondary" data-key="btnCopy">Copy PGN</button>
-                <button id="rematchBtn" class="btn" data-key="btnRematch">Rematch</button> <button id="homeBtn" class="btn btn-danger" data-key="btnHome">Main Menu</button>
+                <button id="rematchBtn" class="btn" data-key="btnRematch">Rematch</button>
+                <button id="homeBtn" class="btn btn-danger" data-key="btnHome">Main Menu</button>
             </div>
-
         </div>
     </div>
     
