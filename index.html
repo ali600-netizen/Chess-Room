@@ -1,67 +1,88 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mosul Chess - Multiplayer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chess Room - Pro Edition</title>
     
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="theme-silver">
     <div class="container">
-        <h1>♟️ Mosul Chess - أونلاين ♟️</h1>
+        
+        <div class="top-bar">
+            <button id="langToggleBtn" class="lang-btn">العربية</button>
+        </div>
+        
+        <h1>Chess Room</h1>
 
-        <div id="lobby">
-            <div class="lobby-box">
-                <h3>⚔️ إنشاء تحدي جديد</h3>
-                <div class="options">
-                    <label>الوقت:</label>
-                    <select id="timeControl">
-                        <option value="3">3 دقائق</option>
-                        <option value="5">5 دقائق</option>
-                        <option value="10">10 دقائق</option>
-                    </select>
-                    
-                    <label>اللون:</label>
-                    <select id="colorSelect">
-                        <option value="random">عشوائي 🎲</option>
-                        <option value="white">أبيض ⚪</option>
-                        <option value="black">أسود ⚫</option>
-                    </select>
-                </div>
-                <button id="createBtn" class="btn primary">إنشاء غرفة</button>
+        <div id="lobby" class="panel">
+            <h3 data-key="lobbyTitle">Match Setup</h3>
+            
+            <div class="form-group">
+                <label data-key="labelMinutes">Minutes</label>
+                <input type="number" id="timeMinutes" value="3" min="1" max="180">
+            </div>
+            
+            <div class="form-group">
+                <label data-key="labelIncrement">Increment (Sec)</label>
+                <input type="number" id="timeIncrement" value="2" min="0" max="60">
+            </div>
+            
+            <div class="form-group">
+                <label data-key="labelColor">Color</label>
+                <select id="colorChoice">
+                    <option value="random" data-key="colorRandom">Random</option>
+                    <option value="white" data-key="colorWhite">White</option>
+                    <option value="black" data-key="colorBlack">Black</option>
+                </select>
             </div>
 
-            <div class="lobby-box">
-                <h3>🤝 الانضمام لتحدي</h3>
-                <input type="text" id="roomInput" placeholder="أدخل كود الغرفة هنا...">
-                <button id="joinBtn" class="btn secondary">انضمام للرقعة</button>
+            <div class="form-group">
+                <label data-key="labelTheme">Site Theme</label>
+                <select id="themeChoice">
+                    <option value="silver" data-key="themeSilver">Navy & Silver Pro</option>
+                    <option value="chesscom" data-key="themeChesscom">Classic</option>
+                </select>
             </div>
+            
+            <button id="createBtn" class="btn" data-key="btnEnter">Enter Match</button>
         </div>
 
         <div id="gameArea" style="display: none;">
-            <div class="status-bar">
-                <span id="roomDisplay" class="badge"></span>
-                <span id="gameStatus">في انتظار الخصم...</span>
+            <div class="player-bar">
+                <span class="player-name" data-key="playerOpponent">Opponent</span>
+                <div class="timer" id="topTimer">00:00</div>
             </div>
             
-            <div class="timers">
-                <div class="timer" id="blackTimer">00:00</div>
-                <div id="board" style="width: 100%; max-width: 400px; margin: 15px auto;"></div>
-                <div class="timer" id="whiteTimer">00:00</div>
+            <div class="board-wrapper">
+                <div id="countdownOverlay" class="countdown-overlay" style="display: none;">3</div>
+                <div id="board" style="width: 100%;"></div>
             </div>
 
-            <button id="downloadPgnBtn" class="btn" style="display: none; margin-top: 15px;">📥 تحميل PGN للتحليل</button>
+            <div class="player-bar">
+                <span class="player-name" data-key="playerYou">You</span>
+                <div class="timer" id="bottomTimer">00:00</div>
+            </div>
+
+            <div class="moves-box" id="movesHistory"></div>
+            
+            <button id="resignBtn" class="btn btn-danger" data-key="btnResign">Resign</button>
+            
+            <div id="endGameActions" class="action-buttons" style="display: none;">
+                <button id="copyPgnBtn" class="btn btn-secondary" data-key="btnCopy">Copy PGN</button>
+                <button id="rematchBtn" class="btn" data-key="btnRematch">Rematch</button>
+                <button id="homeBtn" class="btn btn-danger" data-key="btnHome">Main Menu</button>
+            </div>
         </div>
     </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     
     <script src="script.js"></script>
 </body>
