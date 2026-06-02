@@ -15,7 +15,7 @@ $(document).ready(function() {
     var game = new Chess();
     var board = null;
     var whiteSeconds = 0, blackSeconds = 0, incrementSeconds = 0;
-    var timerInterval = null, selectedSquare = null, gameStarted = false;
+    var timerInterval = null, selectedSquare = null, gameStarted = false, isWaiting = false;
     var premoveQueue = []; 
     var currentRoomId = null;
     var myPlayerColor = 'white';
@@ -33,8 +33,8 @@ $(document).ready(function() {
     var currentTheme = localStorage.getItem('chessTheme') || 'silver';
 
     var translations = {
-        ar: { lobbyTitle: "تخصيص المباراة", labelRoom: "رقم الغرفة", labelMinutes: "الوقت بالدقائق", labelIncrement: "الزيادة بالثواني", labelColor: "اختر لونك", colorRandom: "عشوائي", colorWhite: "أبيض", colorBlack: "أسود", labelTheme: "ثيم الموقع", themeChesscom: "كلاسيكي", themeSilver: "النيلي والفضي الاحترافي", btnEnter: "دخول الغرفة", playerOpponent: "الخصم", playerYou: "أنت", btnResign: "انسحاب", btnCopy: "نسخ PGN", btnRematch: "إعادة التحدي", btnHome: "القائمة الرئيسية", msgCountdownStart: "ابدأ", msgWhiteWinTime: "انتهى الوقت، فوز اللاعب الأسود", msgBlackWinTime: "انتهى الوقت، فوز اللاعب الأبيض", msgResignWin: "انسحاب، فوز اللاعب ", msgCheckmateWin: "كش مات، فوز اللاعب ", msgDraw: "تعادل", msgStalemate: "تعادل بسبب وضع الخنق", msgConfirmResign: "تأكيد الانسحاب؟", msgNoMoves: "لا توجد نقلات لنسخها", msgCopySuccess: "تم نسخ النقلات بنجاح" },
-        en: { lobbyTitle: "Match Setup", labelRoom: "Room ID", labelMinutes: "Minutes", labelIncrement: "Increment (Sec)", labelColor: "Your Color", colorRandom: "Random", colorWhite: "White", colorBlack: "Black", labelTheme: "Site Theme", themeChesscom: "Classic", themeSilver: "Navy & Silver Pro", btnEnter: "Enter Room", playerOpponent: "Opponent", playerYou: "You", btnResign: "Resign", btnCopy: "Copy PGN", btnRematch: "Rematch", btnHome: "Main Menu", msgCountdownStart: "Start", msgWhiteWinTime: "Time out, Black wins", msgBlackWinTime: "Time out, White wins", msgResignWin: "Resignation, victory for ", msgCheckmateWin: "Checkmate, victory for ", msgDraw: "Draw", msgStalemate: "Draw by stalemate", msgConfirmResign: "Confirm resignation?", msgNoMoves: "No moves to copy", msgCopySuccess: "Moves copied successfully" }
+        ar: { lobbyTitle: "تخصيص المباراة", labelRoom: "رقم الغرفة", labelMinutes: "الوقت بالدقائق", labelIncrement: "الزيادة بالثواني", labelColor: "اختر لونك", colorRandom: "عشوائي", colorWhite: "أبيض", colorBlack: "أسود", labelTheme: "ثيم الموقع", themeChesscom: "كلاسيكي", themeSilver: "النيلي والفضي الاحترافي", btnEnter: "دخول الغرفة", playerOpponent: "الخصم", playerYou: "أنت", btnResign: "انسحاب", btnCopy: "نسخ PGN", btnRematch: "إعادة التحدي", btnHome: "القائمة الرئيسية", msgCountdownStart: "ابدأ", msgWaiting: "جاري البحث عن الخصم...", msgRematchOffer: "الخصم يطلب إعادة التحدي!", btnAccept: "موافق", msgWhiteWinTime: "انتهى الوقت، فوز الأسود", msgBlackWinTime: "انتهى الوقت، فوز الأبيض", msgResignWin: "انسحاب، فوز ", msgCheckmateWin: "كش مات، فوز ", msgDraw: "تعادل", msgStalemate: "تعادل بسبب الخنق", msgConfirmResign: "تأكيد الانسحاب؟", msgNoMoves: "لا توجد نقلات", msgCopySuccess: "تم النسخ" },
+        en: { lobbyTitle: "Match Setup", labelRoom: "Room ID", labelMinutes: "Minutes", labelIncrement: "Increment (Sec)", labelColor: "Your Color", colorRandom: "Random", colorWhite: "White", colorBlack: "Black", labelTheme: "Site Theme", themeChesscom: "Classic", themeSilver: "Navy & Silver Pro", btnEnter: "Enter Room", playerOpponent: "Opponent", playerYou: "You", btnResign: "Resign", btnCopy: "Copy PGN", btnRematch: "Rematch", btnHome: "Main Menu", msgCountdownStart: "Start", msgWaiting: "Waiting for opponent...", msgRematchOffer: "Opponent offered a rematch!", btnAccept: "Accept", msgWhiteWinTime: "Time out, Black wins", msgBlackWinTime: "Time out, White wins", msgResignWin: "Resignation, victory for ", msgCheckmateWin: "Checkmate, victory for ", msgDraw: "Draw", msgStalemate: "Draw by stalemate", msgConfirmResign: "Confirm resignation?", msgNoMoves: "No moves to copy", msgCopySuccess: "Copied successfully" }
     };
 
     function applyLanguage(lang) {
@@ -64,18 +64,12 @@ $(document).ready(function() {
         if(timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(function() {
             if (!gameStarted || game.game_over()) return;
-            
-            // اللاعب الذي يلعب هو فقط من يرسل للسيرفر أن وقته انتهى
             if (game.turn() === 'w') { 
                 whiteSeconds--; 
-                if (whiteSeconds <= 0 && myPlayerColor === 'white') {
-                    db.ref('rooms/' + currentRoomId).update({ status: 'timeout_w' });
-                }
+                if (whiteSeconds <= 0 && myPlayerColor === 'white') { db.ref('rooms/' + currentRoomId).update({ status: 'timeout_w' }); }
             } else { 
                 blackSeconds--; 
-                if (blackSeconds <= 0 && myPlayerColor === 'black') {
-                    db.ref('rooms/' + currentRoomId).update({ status: 'timeout_b' });
-                }
+                if (blackSeconds <= 0 && myPlayerColor === 'black') { db.ref('rooms/' + currentRoomId).update({ status: 'timeout_b' }); }
             }
             updateTimersDisplay();
         }, 1000);
@@ -89,14 +83,36 @@ $(document).ready(function() {
     
     function stopTimer() { if(timerInterval) clearInterval(timerInterval); $('.timer').removeClass('active'); }
 
-    function runCountdown(callback) {
+    function runCountdown() {
+        $('#waitingOverlay').hide();
         let count = 3; $('#countdownOverlay').text(count).show();
         let countInt = setInterval(() => {
             count--;
             if(count > 0) $('#countdownOverlay').text(count);
             else if (count === 0) $('#countdownOverlay').text(translations[currentLang].msgCountdownStart);
-            else { clearInterval(countInt); $('#countdownOverlay').hide(); sfx.start.play().catch(()=>{}); callback(); }
+            else { clearInterval(countInt); $('#countdownOverlay').hide(); sfx.start.play().catch(()=>{}); gameStarted = true; updateActiveTimerStyle(); startTimer(); }
         }, 1000);
+    }
+
+    function triggerWinEffects(winnerColor) {
+        if (winnerColor === myPlayerColor.charAt(0)) {
+            var duration = 3000; var end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+        let boardArr = game.board();
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                if (boardArr[r][c] && boardArr[r][c].type === 'k') {
+                    let sq = String.fromCharCode(97 + c) + (8 - r);
+                    if (boardArr[r][c].color === winnerColor) $('.square-' + sq).addClass('winner-king');
+                    else $('.square-' + sq).addClass('loser-king');
+                }
+            }
+        }
     }
 
     $('#createBtn').click(function() { 
@@ -104,68 +120,75 @@ $(document).ready(function() {
         if (!currentRoomId) { alert(currentLang === 'ar' ? 'أدخل رقم الغرفة أولاً!' : 'Please enter a Room ID!'); return; }
         
         let selectedColor = $('#colorChoice').val();
-        let btn = $(this); let originalText = btn.text();
-        btn.text(currentLang === 'ar' ? 'جاري الاتصال...' : 'Connecting...').prop('disabled', true);
-        
+        $(this).prop('disabled', true);
         const roomRef = db.ref('rooms/' + currentRoomId);
         
         roomRef.once('value').then(function(snapshot) {
             let data = snapshot.val();
-            
-            // إنشاء الغرفة أو إعادة تشكيلها إذا كانت اللعبة السابقة منتهية
-            if (!snapshot.exists() || (data && data.status !== 'playing')) {
+            let minutes = parseInt($('#timeMinutes').val()) || 3; 
+            incrementSeconds = parseInt($('#timeIncrement').val()) || 0;
+            whiteSeconds = minutes * 60; blackSeconds = minutes * 60;
+
+            if (!snapshot.exists() || (data && data.status !== 'waiting' && data.status !== 'playing')) {
                 myPlayerColor = selectedColor === 'random' ? (Math.random() >= 0.5 ? 'white' : 'black') : selectedColor;
-                game.reset();
-                let minutes = parseInt($('#timeMinutes').val()) || 3; 
-                incrementSeconds = parseInt($('#timeIncrement').val()) || 0;
-                whiteSeconds = minutes * 60; blackSeconds = minutes * 60;
-                
+                game.reset(); 
                 roomRef.set({
-                    fen: game.fen(), pgn: game.pgn(),
+                    fen: game.fen(), pgn: game.pgn(), lastMove: null,
                     whiteSeconds: whiteSeconds, blackSeconds: blackSeconds,
                     increment: incrementSeconds, creatorColor: myPlayerColor,
-                    status: 'playing' // حالة الغرفة: نشطة
+                    playersCount: 1, status: 'waiting', rematch: 'none'
                 });
-            } else {
-                // الانضمام لغرفة نشطة
+                isWaiting = true;
+            } else if (data.playersCount === 1) {
                 myPlayerColor = data.creatorColor === 'white' ? 'black' : 'white'; 
-                game.load(data.fen);
+                // قراءة الـ PGN بدلاً من الـ FEN لضمان سلامة النقلات لمحركات الشطرنج
+                if (data.pgn) { game.load_pgn(data.pgn); } else { game.load(data.fen); }
                 whiteSeconds = data.whiteSeconds; blackSeconds = data.blackSeconds; incrementSeconds = data.increment;
+                roomRef.update({ playersCount: 2, status: 'playing' });
+                isWaiting = false;
+            } else {
+                alert(currentLang === 'ar' ? "الغرفة ممتلئة!" : "Room is full!"); $('#createBtn').prop('disabled', false); return;
             }
 
             $('#lobby').hide(); $('#gameArea').fadeIn(); board.resize(); 
             board.orientation(myPlayerColor); board.start(false);
             if(game.fen() !== 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1') board.position(game.fen());
 
-            $('#movesHistory').text(game.pgn()); clearHighlights(); selectedSquare = null; premoveQueue = [];
+            $('#movesHistory').text(game.pgn()); clearHighlights(); premoveQueue = [];
             updateTimersDisplay(); $('#endGameActions').hide(); $('#resignBtn').show(); $('.timer').removeClass('active');
-            gameStarted = false; 
             
-            runCountdown(() => { gameStarted = true; updateActiveTimerStyle(); startTimer(); });
+            if (isWaiting) { $('#waitingOverlay').show(); }
 
-            // مستمع السيرفر لكل التحديثات (النقلات، الإعادة، الانسحاب)
             roomRef.on('value', function(snap) {
-                let d = snap.val();
-                if (!d) return;
+                let d = snap.val(); if (!d) return;
 
-                // 1. نظام الريماتش (إذا تم تصفير الرقعة أونلاين)
-                if (d.status === 'playing' && d.fen === 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' && game.fen() !== 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1') {
-                    game.reset(); board.position(game.fen());
-                    whiteSeconds = d.whiteSeconds; blackSeconds = d.blackSeconds; incrementSeconds = d.increment;
-                    $('#movesHistory').text(''); clearHighlights(); premoveQueue = [];
-                    $('#endGameActions').hide(); $('#resignBtn').show(); $('.timer').removeClass('active');
-                    gameStarted = false; 
-                    runCountdown(() => { gameStarted = true; updateActiveTimerStyle(); startTimer(); });
-                    return;
+                if (isWaiting && d.playersCount === 2 && d.status === 'playing') {
+                    isWaiting = false; runCountdown();
                 }
 
-                // 2. تحديث النقلات
-                if (d.fen !== game.fen() && d.status === 'playing') {
-                    game.load(d.fen); board.position(d.fen);
+                if (d.rematch === 'offered' && d.rematchBy !== myPlayerColor && d.status !== 'playing') {
+                    $('#rematchOfferOverlay').show();
+                }
+
+                if (d.rematch === 'accepted' || (d.status === 'playing' && game.game_over())) {
+                    $('#rematchOfferOverlay').hide(); game.reset(); board.position(game.fen());
+                    whiteSeconds = d.whiteSeconds; blackSeconds = d.blackSeconds; incrementSeconds = d.increment;
+                    $('#movesHistory').text(''); clearHighlights(); premoveQueue = []; $('.square-55d63').removeClass('winner-king loser-king');
+                    $('#endGameActions').hide(); $('#resignBtn').show(); $('.timer').removeClass('active');
+                    gameStarted = false; runCountdown();
+                    if(d.rematch === 'accepted') roomRef.update({ rematch: 'none' }); 
+                }
+
+                if (d.lastMove && d.status === 'playing' && d.fen !== game.fen()) {
+                    let m = game.move({ from: d.lastMove.from, to: d.lastMove.to, promotion: d.lastMove.promotion });
+                    // إذا فشلت قراءة النقلة المفردة، نسحب الـ PGN بالكامل كخطة بديلة آمنة للمحركات
+                    if (!m) { game.load_pgn(d.pgn); } 
+                    
+                    board.position(game.fen());
                     sfx.move.play().catch(()=>{});
                     whiteSeconds = d.whiteSeconds; blackSeconds = d.blackSeconds;
                     updateTimersDisplay(); updateActiveTimerStyle();
-                    $('#movesHistory').text(d.pgn);
+                    $('#movesHistory').text(game.pgn());
                     var movesBox = document.getElementById("movesHistory"); movesBox.scrollTop = movesBox.scrollHeight;
                     
                     if (game.in_checkmate() || game.in_draw() || game.in_stalemate()) { handleGameEndScenarios(); return; } 
@@ -174,19 +197,17 @@ $(document).ready(function() {
                     executeNextPremove();
                 }
 
-                // 3. الاستماع للاستسلام أو انتهاء الوقت
                 if (gameStarted) {
-                    if (d.status === 'resigned_w') { endGame(translations[currentLang].msgResignWin + (currentLang === 'ar' ? 'الأسود' : 'Black')); } 
-                    else if (d.status === 'resigned_b') { endGame(translations[currentLang].msgResignWin + (currentLang === 'ar' ? 'الأبيض' : 'White')); } 
-                    else if (d.status === 'timeout_w') { endGame(translations[currentLang].msgWhiteWinTime); } 
-                    else if (d.status === 'timeout_b') { endGame(translations[currentLang].msgBlackWinTime); }
+                    if (d.status === 'resigned_w') { endGame(translations[currentLang].msgResignWin + (currentLang === 'ar' ? 'الأسود' : 'Black'), 'b'); } 
+                    else if (d.status === 'resigned_b') { endGame(translations[currentLang].msgResignWin + (currentLang === 'ar' ? 'الأبيض' : 'White'), 'w'); } 
+                    else if (d.status === 'timeout_w') { endGame(translations[currentLang].msgWhiteWinTime, 'b'); } 
+                    else if (d.status === 'timeout_b') { endGame(translations[currentLang].msgBlackWinTime, 'w'); }
                 }
             });
-            btn.text(originalText).prop('disabled', false); 
+            $('#createBtn').prop('disabled', false); 
         });
     });
 
-    // إرسال الانسحاب للسيرفر بدلاً من إنهائه محلياً فقط
     $('#resignBtn').click(function() { 
         if (!gameStarted || game.game_over()) return; 
         if(confirm(translations[currentLang].msgConfirmResign)) {
@@ -195,28 +216,29 @@ $(document).ready(function() {
         }
     });
     
-    // زر الإعادة (Rematch) ينظف السيرفر ويبدأ من جديد
     $('#rematchBtn').click(function() {
+        db.ref('rooms/' + currentRoomId).update({ rematch: 'offered', rematchBy: myPlayerColor });
+        let btn = $(this); let original = btn.text();
+        btn.text(currentLang === 'ar' ? 'تم الطلب...' : 'Requested...').prop('disabled', true);
+        setTimeout(() => { btn.text(original).prop('disabled', false); }, 3000);
+    });
+
+    $('#acceptRematchBtn').click(function() {
         let minutes = parseInt($('#timeMinutes').val()) || 3;
         db.ref('rooms/' + currentRoomId).update({
-            fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-            pgn: '',
-            whiteSeconds: minutes * 60,
-            blackSeconds: minutes * 60,
-            status: 'playing'
+            fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', pgn: '', lastMove: null,
+            whiteSeconds: minutes * 60, blackSeconds: minutes * 60,
+            status: 'playing', rematch: 'accepted'
         });
     });
 
     $('#homeBtn').click(function() { stopTimer(); $('#gameArea').hide(); $('#lobby').fadeIn(); db.ref('rooms/' + currentRoomId).off(); });
 
-    // تقنية النسخ الحديثة
     $('#copyPgnBtn').click(function() { 
         let pgnData = game.pgn(); 
         if (!pgnData) { alert(translations[currentLang].msgNoMoves); return; } 
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(pgnData).then(() => { alert(translations[currentLang].msgCopySuccess); })
-            .catch(() => { fallbackCopy(pgnData); });
-        } else { fallbackCopy(pgnData); }
+        if (navigator.clipboard) { navigator.clipboard.writeText(pgnData).then(() => { alert(translations[currentLang].msgCopySuccess); }).catch(() => { fallbackCopy(pgnData); }); } 
+        else { fallbackCopy(pgnData); }
     });
     
     function fallbackCopy(text) {
@@ -227,19 +249,23 @@ $(document).ready(function() {
     function handleGameEndScenarios() {
         if (game.in_checkmate()) {
             if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]); 
-            let winnerText = game.turn() === 'w' ? (currentLang === 'ar' ? 'الأسود' : 'Black') : (currentLang === 'ar' ? 'الأبيض' : 'White');
-            endGame(translations[currentLang].msgCheckmateWin + winnerText);
-        } else if (game.in_draw()) { endGame(translations[currentLang].msgDraw); } 
-        else if (game.in_stalemate()) { endGame(translations[currentLang].msgStalemate); }
+            let winnerColor = game.turn() === 'w' ? 'b' : 'w';
+            let winnerText = winnerColor === 'b' ? (currentLang === 'ar' ? 'الأسود' : 'Black') : (currentLang === 'ar' ? 'الأبيض' : 'White');
+            endGame(translations[currentLang].msgCheckmateWin + winnerText, winnerColor);
+        } else if (game.in_draw()) { endGame(translations[currentLang].msgDraw, null); } 
+        else if (game.in_stalemate()) { endGame(translations[currentLang].msgStalemate, null); }
     }
 
-    function endGame(message) { gameStarted = false; stopTimer(); $('#resignBtn').hide(); $('#endGameActions').css('display', 'flex').hide().fadeIn(); sfx.gameEnd.play().catch(()=>{}); setTimeout(() => { alert(message); }, 50); }
+    function endGame(message, winnerColor) { 
+        gameStarted = false; stopTimer(); $('#resignBtn').hide(); $('#endGameActions').css('display', 'flex').hide().fadeIn(); sfx.gameEnd.play().catch(()=>{}); 
+        if (winnerColor) triggerWinEffects(winnerColor);
+        setTimeout(() => { alert(message); }, 500); 
+    }
 
     function getVirtualGame() {
         let vGame = new Chess(game.fen());
         for (let i = 0; i < premoveQueue.length; i++) {
-            let p = premoveQueue[i];
-            let tokens = vGame.fen().split(' '); tokens[1] = myPlayerColor.charAt(0); tokens[3] = '-'; vGame.load(tokens.join(' '));
+            let p = premoveQueue[i]; let tokens = vGame.fen().split(' '); tokens[1] = myPlayerColor.charAt(0); tokens[3] = '-'; vGame.load(tokens.join(' '));
             vGame.move({from: p.from, to: p.to, promotion: 'q'});
         }
         let tokens = vGame.fen().split(' '); tokens[1] = myPlayerColor.charAt(0); tokens[3] = '-'; vGame.load(tokens.join(' '));
@@ -276,6 +302,7 @@ $(document).ready(function() {
         if (isMyLocalMove) {
             db.ref('rooms/' + currentRoomId).update({
                 fen: game.fen(), pgn: game.pgn(),
+                lastMove: { from: move.from, to: move.to, promotion: move.promotion || '' },
                 whiteSeconds: whiteSeconds, blackSeconds: blackSeconds
             });
         }
@@ -287,18 +314,14 @@ $(document).ready(function() {
 
     function executeNextPremove() {
         if (premoveQueue.length > 0 && game.turn() === myPlayerColor.charAt(0) && !game.game_over()) {
-            let p = premoveQueue.shift();
-            let move = game.move({ from: p.from, to: p.to, promotion: 'q' });
-            if (move) { setTimeout(function() { updateBoardVisuals(); handleMoveCompleted(move, true); }, 50); } 
-            else { cancelPremoves(); }
+            let p = premoveQueue.shift(); let move = game.move({ from: p.from, to: p.to, promotion: 'q' });
+            if (move) { setTimeout(function() { updateBoardVisuals(); handleMoveCompleted(move, true); }, 50); } else { cancelPremoves(); }
         }
     }
 
     $(document).on('click', '#board .square-55d63', function() {
         if (!gameStarted || game.game_over()) return;
-        var square = $(this).attr('data-square');
-        var myColorCode = myPlayerColor.charAt(0);
-        var vGame = getVirtualGame();
+        var square = $(this).attr('data-square'); var myColorCode = myPlayerColor.charAt(0); var vGame = getVirtualGame();
 
         if (selectedSquare) {
             let selectedPiece = vGame.get(selectedSquare);
@@ -308,39 +331,27 @@ $(document).ready(function() {
                     if (move) { board.position(game.fen()); clearHighlights(); selectedSquare = null; handleMoveCompleted(move, true); return; }
                 } else {
                     let moves = vGame.moves({square: selectedSquare, verbose: true});
-                    if (moves.some(m => m.to === square)) {
-                        premoveQueue.push({ from: selectedSquare, to: square });
-                        clearHighlights(); updateBoardVisuals(); selectedSquare = null; return;
-                    }
+                    if (moves.some(m => m.to === square)) { premoveQueue.push({ from: selectedSquare, to: square }); clearHighlights(); updateBoardVisuals(); selectedSquare = null; return; }
                 }
             }
             cancelPremoves(); clearHighlights(); selectedSquare = null;
         }
         
         var vPiece = vGame.get(square);
-        if (vPiece && vPiece.color === myColorCode) {
-            selectedSquare = square; highlightLegalMoves(square, vGame);
-        } else { cancelPremoves(); clearHighlights(); selectedSquare = null; }
+        if (vPiece && vPiece.color === myColorCode) { selectedSquare = square; highlightLegalMoves(square, vGame); } 
+        else { cancelPremoves(); clearHighlights(); selectedSquare = null; }
     });
 
     function onDragStart (source, piece) {
         if (!gameStarted || game.game_over()) return false;
-        var myColorCode = myPlayerColor.charAt(0);
-        var vGame = getVirtualGame();
-        var vPiece = vGame.get(source);
-        
+        var myColorCode = myPlayerColor.charAt(0); var vGame = getVirtualGame(); var vPiece = vGame.get(source);
         if (!vPiece || vPiece.color !== myColorCode) return false; 
-
         selectedSquare = source; highlightLegalMoves(source, vGame); return true;
     }
 
     function onDrop (source, target) {
         if (source === target) return 'snapback'; 
-        clearHighlights();
-        var myColorCode = myPlayerColor.charAt(0);
-        var vGame = getVirtualGame();
-        var piece = vGame.get(source);
-        
+        clearHighlights(); var myColorCode = myPlayerColor.charAt(0); var vGame = getVirtualGame(); var piece = vGame.get(source);
         if (!piece || piece.color !== myColorCode) return 'snapback';
 
         if (premoveQueue.length === 0 && game.turn() === myColorCode) {
@@ -349,21 +360,13 @@ $(document).ready(function() {
             selectedSquare = null; handleMoveCompleted(move, true); return;
         } else {
             let moves = vGame.moves({square: source, verbose: true});
-            if (moves.some(m => m.to === target)) {
-                premoveQueue.push({from: source, to: target});
-                updateBoardVisuals(); selectedSquare = null; return 'snapback';
-            }
+            if (moves.some(m => m.to === target)) { premoveQueue.push({from: source, to: target}); updateBoardVisuals(); selectedSquare = null; return 'snapback'; }
         }
         cancelPremoves(); selectedSquare = null; return 'snapback';
     }
 
     function onSnapEnd () { board.position(game.fen()); }
 
-    var config = {
-        draggable: true, position: 'start', onDragStart: onDragStart, onDrop: onDrop, onSnapEnd: onSnapEnd,
-        moveSpeed: 100, snapbackSpeed: 100, snapSpeed: 50, pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-    };
-    
-    board = Chessboard('board', config); $(window).resize(board.resize);
-    applyLanguage(currentLang); applyTheme(currentTheme);
+    var config = { draggable: true, position: 'start', onDragStart: onDragStart, onDrop: onDrop, onSnapEnd: onSnapEnd, moveSpeed: 100, snapbackSpeed: 100, snapSpeed: 50, pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png' };
+    board = Chessboard('board', config); $(window).resize(board.resize); applyLanguage(currentLang); applyTheme(currentTheme);
 });
