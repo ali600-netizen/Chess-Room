@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Room - Pro Edition</title>
+    <title>Chess Room - Online Edition</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <link rel="stylesheet" href="style.css"> </head>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+</head>
 <body class="theme-silver">
     <div class="container">
         <div class="top-bar">
@@ -37,7 +41,7 @@
             <div class="form-group">
                 <label data-key="labelColor">Your Color</label>
                 <select id="colorChoice">
-                    <option value="white" data-key="colorWhite">White</option>
+                    <option value="random" data-key="colorRandom">Random</option> <option value="white" data-key="colorWhite">White</option>
                     <option value="black" data-key="colorBlack">Black</option>
                 </select>
             </div>
@@ -50,7 +54,7 @@
                 </select>
             </div>
             
-            <button id="createBtn" class="btn" data-key="btnEnter">Enter Match</button>
+            <button id="createBtn" class="btn" data-key="btnEnter">Enter Room</button>
         </div>
 
         <div id="gameArea" style="display: none;">
@@ -83,7 +87,6 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    
-    <script type="module" src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
