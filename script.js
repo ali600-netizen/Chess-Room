@@ -1,4 +1,4 @@
-const firebaseConfig = {
+                    const firebaseConfig = {
     apiKey: "AIzaSyCWL3DohN_BVmwlDjLYP_UohoKqnw4ylzU",
     authDomain: "chessroom-ca23f.firebaseapp.com",
     databaseURL: "https://chessroom-ca23f-default-rtdb.firebaseio.com/",
@@ -83,6 +83,7 @@ $(document).ready(function() {
     
     function stopTimer() { if(timerInterval) clearInterval(timerInterval); $('.timer').removeClass('active'); }
 
+    // إصلاح العد التنازلي ليعمل للاعبين معاً
     function runCountdown() {
         $('#waitingOverlay').hide();
         let count = 3; $('#countdownOverlay').text(count).show();
@@ -90,10 +91,18 @@ $(document).ready(function() {
             count--;
             if(count > 0) $('#countdownOverlay').text(count);
             else if (count === 0) $('#countdownOverlay').text(translations[currentLang].msgCountdownStart);
-            else { clearInterval(countInt); $('#countdownOverlay').hide(); sfx.start.play().catch(()=>{}); gameStarted = true; updateActiveTimerStyle(); startTimer(); }
+            else { 
+                clearInterval(countInt); 
+                $('#countdownOverlay').hide(); 
+                sfx.start.play().catch(()=>{}); 
+                gameStarted = true; // هنا تفتح الرقعة لكلا اللاعبين
+                updateActiveTimerStyle(); 
+                startTimer(); 
+            }
         }, 1000);
     }
 
+    // إطلاق الألعاب النارية فقط (تم مسح تظليل الملوك السيء)
     function triggerWinEffects(winnerColor) {
         if (winnerColor === myPlayerColor.charAt(0)) {
             var duration = 3000; var end = Date.now() + duration;
@@ -102,16 +111,6 @@ $(document).ready(function() {
                 confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
                 if (Date.now() < end) requestAnimationFrame(frame);
             }());
-        }
-        let boardArr = game.board();
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                if (boardArr[r][c] && boardArr[r][c].type === 'k') {
-                    let sq = String.fromCharCode(97 + c) + (8 - r);
-                    if (boardArr[r][c].color === winnerColor) $('.square-' + sq).addClass('winner-king');
-                    else $('.square-' + sq).addClass('loser-king');
-                }
-            }
         }
     }
 
@@ -130,7 +129,9 @@ $(document).ready(function() {
             whiteSeconds = minutes * 60; blackSeconds = minutes * 60;
 
             if (!snapshot.exists() || (data && data.status !== 'waiting' && data.status !== 'playing')) {
-                myPlayerColor = selectedColor === 'random' ? (Math.random() >= 0.5 ? 'white' : 'black') : selectedColor;
+                // إصلاح العشوائي: استخدام مصفوفة لضمان التوزيع 50/50 الحقيقي
+                let colorsArr = ['white', 'black'];
+                myPlayerColor = selectedColor === 'random' ? colorsArr[Math.floor(Math.random() * colorsArr.length)] : selectedColor;
                 game.reset(); 
                 roomRef.set({
                     fen: game.fen(), pgn: game.pgn(), lastMove: null,
@@ -140,8 +141,8 @@ $(document).ready(function() {
                 });
                 isWaiting = true;
             } else if (data.playersCount === 1) {
+                // اللاعب الثاني ينضم للغرفة
                 myPlayerColor = data.creatorColor === 'white' ? 'black' : 'white'; 
-                // قراءة الـ PGN بدلاً من الـ FEN لضمان سلامة النقلات لمحركات الشطرنج
                 if (data.pgn) { game.load_pgn(data.pgn); } else { game.load(data.fen); }
                 whiteSeconds = data.whiteSeconds; blackSeconds = data.blackSeconds; incrementSeconds = data.increment;
                 roomRef.update({ playersCount: 2, status: 'playing' });
@@ -156,12 +157,20 @@ $(document).ready(function() {
 
             $('#movesHistory').text(game.pgn()); clearHighlights(); premoveQueue = [];
             updateTimersDisplay(); $('#endGameActions').hide(); $('#resignBtn').show(); $('.timer').removeClass('active');
+            gameStarted = false; // اللعبة مقفلة للجميع في البداية
             
-            if (isWaiting) { $('#waitingOverlay').show(); }
+            if (isWaiting) { 
+                // اللاعب الأول ينتظر الخصم
+                $('#waitingOverlay').show(); 
+            } else {
+                // اللاعب الثاني دخل، نبدأ العد التنازلي له فوراً
+                runCountdown();
+            }
 
             roomRef.on('value', function(snap) {
                 let d = snap.val(); if (!d) return;
 
+                // اللاعب الأول يبدأ العد التنازلي عندما يكتمل العدد
                 if (isWaiting && d.playersCount === 2 && d.status === 'playing') {
                     isWaiting = false; runCountdown();
                 }
@@ -173,7 +182,7 @@ $(document).ready(function() {
                 if (d.rematch === 'accepted' || (d.status === 'playing' && game.game_over())) {
                     $('#rematchOfferOverlay').hide(); game.reset(); board.position(game.fen());
                     whiteSeconds = d.whiteSeconds; blackSeconds = d.blackSeconds; incrementSeconds = d.increment;
-                    $('#movesHistory').text(''); clearHighlights(); premoveQueue = []; $('.square-55d63').removeClass('winner-king loser-king');
+                    $('#movesHistory').text(''); clearHighlights(); premoveQueue = []; 
                     $('#endGameActions').hide(); $('#resignBtn').show(); $('.timer').removeClass('active');
                     gameStarted = false; runCountdown();
                     if(d.rematch === 'accepted') roomRef.update({ rematch: 'none' }); 
@@ -181,7 +190,6 @@ $(document).ready(function() {
 
                 if (d.lastMove && d.status === 'playing' && d.fen !== game.fen()) {
                     let m = game.move({ from: d.lastMove.from, to: d.lastMove.to, promotion: d.lastMove.promotion });
-                    // إذا فشلت قراءة النقلة المفردة، نسحب الـ PGN بالكامل كخطة بديلة آمنة للمحركات
                     if (!m) { game.load_pgn(d.pgn); } 
                     
                     board.position(game.fen());
