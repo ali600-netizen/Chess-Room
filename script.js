@@ -8,15 +8,26 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 const db = firebase.database();
+const auth = firebase.auth(); // تفعيل الحماية
+
+// تسجيل دخول شبح فوري
+auth.signInAnonymously().catch(function(error) {
+    console.error("Auth Error:", error.message);
+});
 
 $(document).ready(function() {
+    var myUid = null;
+    
+    // التقاط الهوية السرية
+    auth.onAuthStateChanged(function(user) {
+        if (user) { myUid = user.uid; }
+    });
+
     var game = new Chess(), board = null;
     var whiteSeconds = 0, blackSeconds = 0, incrementSeconds = 0;
     var timerInterval = null, selectedSquare = null, gameStarted = false;
     var premove = null, isWaiting = false; 
     var currentRoomId = null, myPlayerColor = 'white', activeRoomRef = null;
-    
-    // القفل الذهبي لمنع اختفاء الأزرار اللانهائي
     var isGameEndHandled = false; 
 
     const sfx = {
@@ -157,6 +168,11 @@ $(document).ready(function() {
         currentRoomId = $('#roomId').val().trim();
         if (!currentRoomId) return;
         
+        if (!myUid) {
+            alert(currentLang === 'ar' ? "جاري الاتصال الآمن بالسيرفر، حاول مجدداً بعد ثانية..." : "Connecting securely, try again in a second...");
+            return;
+        }
+        
         $(this).prop('disabled', true);
         if (activeRoomRef) activeRoomRef.off();
         activeRoomRef = db.ref('rooms/' + currentRoomId);
@@ -169,7 +185,7 @@ $(document).ready(function() {
             let isCreator = false;
             let savedRole = localStorage.getItem('chess_role_' + currentRoomId);
             
-            isGameEndHandled = false; // تصفير القفل عند الدخول
+            isGameEndHandled = false; 
 
             if (savedRole && data && data.status === 'playing') {
                 myPlayerColor = savedRole;
@@ -186,7 +202,8 @@ $(document).ready(function() {
                 activeRoomRef.set({
                     fen: game.fen(), pgn: game.pgn(), lastMove: null,
                     whiteSeconds: whiteSeconds, blackSeconds: blackSeconds, increment: incrementSeconds,
-                    creatorColor: myPlayerColor, playersCount: 1, status: 'waiting', action: 'none'
+                    creatorColor: myPlayerColor, playersCount: 1, status: 'waiting', action: 'none',
+                    [myPlayerColor + 'Uid']: myUid // تأمين المقعد بالـ UID
                 });
                 localStorage.setItem('chess_role_' + currentRoomId, myPlayerColor); 
                 isWaiting = true;
@@ -194,7 +211,10 @@ $(document).ready(function() {
                 myPlayerColor = data.creatorColor === 'white' ? 'black' : 'white'; 
                 game.load_pgn(data.pgn || '');
                 whiteSeconds = data.whiteSeconds; blackSeconds = data.blackSeconds; incrementSeconds = data.increment;
-                activeRoomRef.update({ playersCount: 2, status: 'playing' });
+                activeRoomRef.update({ 
+                    playersCount: 2, status: 'playing',
+                    [myPlayerColor + 'Uid']: myUid // تأمين المقعد بالـ UID
+                });
                 localStorage.setItem('chess_role_' + currentRoomId, myPlayerColor); 
                 isWaiting = false;
             } else {
@@ -234,30 +254,28 @@ $(document).ready(function() {
                         $('#interactiveMsg').text(msg);
                         $('#acceptActionBtn').data('actionType', d.action.type);
                         $('#declineActionBtn').data('actionType', d.action.type);
-                        
-                        // إجبار الطبقة على الظهور مهما كانت حالة اللوحة النهائية
                         $('#interactiveOverlay').stop(true, true).fadeIn(200);
                     } else if (d.action.state === 'declined') {
                         $('#interactiveOverlay').fadeOut(200);
                         $('#drawOfferBtn').prop('disabled', false).text(translations[currentLang].btnDraw);
                         $('#modalRematchBtn').prop('disabled', false).text(translations[currentLang].btnRematch);
-                        
-                        // الشخص الذي تم رفض طلبه هو من يمسح الأكشن لتنظيف السيرفر
-                        if (d.action.by !== myPlayerColor) { setTimeout(() => activeRoomRef.update({ action: null }), 500); }
+                        if (d.action.by === myPlayerColor) { setTimeout(() => activeRoomRef.update({ action: null }), 500); }
                     }
                 }
 
                 if (d.action && d.action.state === 'accepted') {
                     $('#interactiveOverlay').fadeOut(200);
-                    if (d.action.type === 'rematch') {
-                        isGameEndHandled = false; // تصفير القفل عند بدء إعادة التحدي
+                    if (d.action.type === 'draw') {
+                        activeRoomRef.update({ status: 'draw_agreed', action: null });
+                    } else if (d.action.type === 'rematch') {
+                        isGameEndHandled = false; 
                         $('#endGameModal').fadeOut(200); game.reset(); board.position(game.fen());
                         whiteSeconds = d.whiteSeconds; blackSeconds = d.blackSeconds; incrementSeconds = d.increment;
                         $('#movesHistory').text(''); clearHighlights(); cancelPremove(); updateCapturedPieces();
                         $('#resignBtn').show(); $('#drawOfferBtn').show(); $('.timer').removeClass('active');
                         gameStarted = false; runCountdown();
                     }
-                    if (d.action.by === myPlayerColor && d.action.type !== 'draw') { setTimeout(() => activeRoomRef.update({ action: null }), 500); } 
+                    if (d.action.by !== myPlayerColor) { activeRoomRef.update({ action: null }); } 
                 }
 
                 if (d.lastMove && d.status === 'playing' && d.fen !== game.fen()) {
@@ -282,9 +300,7 @@ $(document).ready(function() {
                     executePremove();
                 }
 
-                // تنفيذ أمر السيرفر بنهاية اللعبة لمرة واحدة فقط
                 if (d.status === 'resigned_w' || d.status === 'resigned_b' || d.status === 'timeout_w' || d.status === 'timeout_b' || d.status === 'draw_agreed' || d.status === 'checkmate_w' || d.status === 'checkmate_b' || d.status === 'draw_auto') {
-                    
                     if (d.status === 'resigned_w') { handleServerGameEnd('b', translations[currentLang].rsnResign); } 
                     else if (d.status === 'resigned_b') { handleServerGameEnd('w', translations[currentLang].rsnResign); } 
                     else if (d.status === 'timeout_w') { handleServerGameEnd('b', translations[currentLang].rsnTimeout); } 
@@ -338,7 +354,6 @@ $(document).ready(function() {
         activeRoomRef.update(updateData);
     });
 
-    // إصلاح زر الرفض ليخفي الشاشة محلياً فوراً ويرسل للسيرفر
     $('#declineActionBtn').click(function() {
         let actionType = $(this).data('actionType');
         $('#interactiveOverlay').fadeOut(200); 
@@ -367,7 +382,6 @@ $(document).ready(function() {
         }
     }
 
-    // إضافة القفل الذهبي هنا لمنع اللوب
     function handleServerGameEnd(winnerColor, reasonTxt) { 
         if (isGameEndHandled) return; 
         isGameEndHandled = true;
