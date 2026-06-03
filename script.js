@@ -1,4 +1,4 @@
-const firebaseConfig = {
+                            const firebaseConfig = {
     apiKey: "AIzaSyCWL3DohN_BVmwlDjLYP_UohoKqnw4ylzU",
     authDomain: "chessroom-ca23f.firebaseapp.com",
     databaseURL: "https://chessroom-ca23f-default-rtdb.firebaseio.com/",
@@ -16,7 +16,6 @@ $(document).ready(function() {
     var premove = null, isWaiting = false; 
     var currentRoomId = null, myPlayerColor = 'white', activeRoomRef = null;
 
-    // تم إضافة صوت الكش (Check) للعمل بدقة
     const sfx = {
         move: new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3'),
         capture: new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3'),
@@ -109,6 +108,50 @@ $(document).ready(function() {
         }, 1000);
     }
 
+    // --- حساب القطع المأكولة ونقاط التفوق (Material Advantage) ---
+    function updateCapturedPieces() {
+        if (!game) return;
+        const pVals = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+        const initC = { w: {p:8, n:2, b:2, r:2, q:1}, b: {p:8, n:2, b:2, r:2, q:1} };
+        let curC = { w: {p:0, n:0, b:0, r:0, q:0}, b: {p:0, n:0, b:0, r:0, q:0} };
+        let score = { w: 0, b: 0 };
+
+        let brd = game.board();
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                let pc = brd[r][c];
+                if (pc) { curC[pc.color][pc.type]++; score[pc.color] += pVals[pc.type]; }
+            }
+        }
+
+        let capByW = []; // قطع خسرها الأسود
+        let capByB = []; // قطع خسرها الأبيض
+
+        // ترتيب عرض القطع كلاسيكياً (وزير ثم رخ ثم فيل ثم حصان ثم بيدق)
+        ['q', 'r', 'b', 'n', 'p'].forEach(type => {
+            let wLost = initC.w[type] - curC.w[type];
+            let bLost = initC.b[type] - curC.b[type];
+            for(let i=0; i<wLost; i++) capByB.push({color: 'w', type: type});
+            for(let i=0; i<bLost; i++) capByW.push({color: 'b', type: type});
+        });
+
+        let wAdv = score.w - score.b;
+        let bAdv = score.b - score.w;
+
+        renderCaptured('w', capByW, wAdv);
+        renderCaptured('b', capByB, bAdv);
+    }
+
+    function renderCaptured(color, pieces, adv) {
+        let containerId = (color === myPlayerColor.charAt(0)) ? '#bottomCaptured' : '#topCaptured';
+        let html = '';
+        pieces.forEach(p => {
+            html += `<div class="captured-piece" style="background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/light/150/${p.color}${p.type}.png');"></div>`;
+        });
+        if (adv > 0) { html += `<span class="score-adv">+${adv}</span>`; }
+        $(containerId).html(html);
+    }
+
     $('#createBtn').click(function() { 
         currentRoomId = $('#roomId').val().trim();
         if (!currentRoomId) return;
@@ -159,7 +202,6 @@ $(document).ready(function() {
             $('#lobby').hide(); $('#endGameModal').hide(); $('#gameArea').fadeIn(300); 
             
             if (!board) {
-                // استخدام قطع Light الفخمة من Chess.com كما طلبت في الصورة
                 var config = { 
                     draggable: true, position: 'start', onDragStart: onDragStart, onDrop: onDrop, onSnapEnd: onSnapEnd, 
                     moveSpeed: 100, snapbackSpeed: 100, 
@@ -170,7 +212,7 @@ $(document).ready(function() {
             }
             
             board.orientation(myPlayerColor); board.position(game.fen(), false);
-            $('#movesHistory').text(game.pgn()); clearHighlights(); cancelPremove();
+            $('#movesHistory').text(game.pgn()); clearHighlights(); cancelPremove(); updateCapturedPieces();
             updateTimersDisplay(); $('#resignBtn').show(); $('#drawOfferBtn').show(); $('.timer').removeClass('active');
             gameStarted = false; 
             
@@ -187,12 +229,14 @@ $(document).ready(function() {
                     if (d.action.state === 'offered') {
                         let msg = d.action.type === 'rematch' ? translations[currentLang].msgRematchOffer : translations[currentLang].msgDrawOffer;
                         $('#interactiveMsg').text(msg);
-                        $('#interactiveOverlay').data('actionType', d.action.type).fadeIn(200);
+                        // حفظ نوع الأكشن في الداتا للزر
+                        $('#acceptActionBtn').data('actionType', d.action.type);
+                        $('#declineActionBtn').data('actionType', d.action.type);
+                        $('#interactiveOverlay').fadeIn(200);
                     } else if (d.action.state === 'declined') {
                         $('#interactiveOverlay').fadeOut(200);
                         $('#drawOfferBtn').prop('disabled', false).text(translations[currentLang].btnDraw);
                         $('#modalRematchBtn').prop('disabled', false).text(translations[currentLang].btnRematch);
-                        // حل المشكلة: مُرسل الطلب يقوم بمسحه بعد تلقي الرفض لكي لا يعلق
                         if (d.action.by === myPlayerColor) { setTimeout(() => activeRoomRef.update({ action: null }), 500); }
                     }
                 }
@@ -204,7 +248,7 @@ $(document).ready(function() {
                     } else if (d.action.type === 'rematch') {
                         $('#endGameModal').fadeOut(200); game.reset(); board.position(game.fen());
                         whiteSeconds = d.whiteSeconds; blackSeconds = d.blackSeconds; incrementSeconds = d.increment;
-                        $('#movesHistory').text(''); clearHighlights(); cancelPremove(); 
+                        $('#movesHistory').text(''); clearHighlights(); cancelPremove(); updateCapturedPieces();
                         $('#resignBtn').show(); $('#drawOfferBtn').show(); $('.timer').removeClass('active');
                         gameStarted = false; runCountdown();
                     }
@@ -220,13 +264,12 @@ $(document).ready(function() {
                     } 
                     board.position(game.fen());
                     
-                    // تشغيل صوت الكش بدقة
                     if (game.in_check()) sfx.check.play().catch(()=>{});
                     else if (m && m.captured) sfx.capture.play().catch(()=>{}); 
                     else sfx.move.play().catch(()=>{});
                     
                     whiteSeconds = d.whiteSeconds; blackSeconds = d.blackSeconds;
-                    updateTimersDisplay(); updateActiveTimerStyle();
+                    updateTimersDisplay(); updateActiveTimerStyle(); updateCapturedPieces();
                     $('#movesHistory').text(game.pgn());
                     var movesBox = document.getElementById("movesHistory"); movesBox.scrollTop = movesBox.scrollHeight;
                     
@@ -267,8 +310,9 @@ $(document).ready(function() {
         $(this).prop('disabled', true).text('...');
     });
 
+    // تم إصلاح الأزرار لتأخذ النوع من الزر نفسه
     $('#acceptActionBtn').click(function() {
-        let actionType = $('#interactiveOverlay').data('actionType');
+        let actionType = $(this).data('actionType');
         let updateData = { action: { type: actionType, state: 'accepted', by: myPlayerColor } };
         
         if (actionType === 'rematch') {
@@ -282,7 +326,7 @@ $(document).ready(function() {
     });
 
     $('#declineActionBtn').click(function() {
-        let actionType = $('#interactiveOverlay').data('actionType');
+        let actionType = $(this).data('actionType');
         activeRoomRef.update({ action: { type: actionType, state: 'declined', by: myPlayerColor } });
     });
 
@@ -292,7 +336,7 @@ $(document).ready(function() {
         if (activeRoomRef) activeRoomRef.off(); 
     });
 
-    $('#modalCopyPgnBtn').click(function() { 
+    $('#modalCopyPgnBtn, #copyPgnBtn').click(function() { 
         let pgnData = game.pgn(); if (!pgnData) return; 
         if (navigator.clipboard) { navigator.clipboard.writeText(pgnData).then(()=>alert(translations[currentLang].msgCopySuccess)).catch(() => { fallbackCopy(pgnData); }); } else { fallbackCopy(pgnData); }
     });
@@ -312,7 +356,6 @@ $(document).ready(function() {
         }
     }
 
-    // عرض مصطلحات الشطرنج في اللوحة النهائية بدلاً من الكلمات العادية
     function handleServerGameEnd(winnerColor, reasonTxt) { 
         gameStarted = false; stopTimer(); $('#resignBtn').hide(); $('#drawOfferBtn').hide(); $('#interactiveOverlay').fadeOut(200);
         sfx.gameEnd.play().catch(()=>{}); 
@@ -343,7 +386,7 @@ $(document).ready(function() {
         else sfx.move.play().catch(()=>{});
         
         if (move.color === 'w') whiteSeconds += incrementSeconds; else blackSeconds += incrementSeconds;
-        updateTimersDisplay(); updateActiveTimerStyle(); startTimer();
+        updateTimersDisplay(); updateActiveTimerStyle(); startTimer(); updateCapturedPieces();
         $('#movesHistory').text(game.pgn()); var movesBox = document.getElementById("movesHistory"); movesBox.scrollTop = movesBox.scrollHeight;
         
         activeRoomRef.update({ fen: game.fen(), pgn: game.pgn(), lastMove: { from: move.from, to: move.to, promotion: move.promotion || '' }, whiteSeconds: whiteSeconds, blackSeconds: blackSeconds });
@@ -362,7 +405,6 @@ $(document).ready(function() {
         if (!gameStarted || game.game_over()) return;
         var square = $(this).attr('data-square'); var myColorCode = myPlayerColor.charAt(0);
         
-        // حل مشكلة التراجع عن النقلة المسبقة بمجرد لمس أي مربع
         if (premove) { cancelPremove(); }
         
         if (selectedSquare) {
@@ -370,7 +412,7 @@ $(document).ready(function() {
                 var move = game.move({ from: selectedSquare, to: square, promotion: 'q' }); 
                 if (move) { board.position(game.fen()); clearHighlights(); selectedSquare = null; processLocalMove(move); return; }
             } else {
-                cancelPremove(); // حل مشكلة إضاءة المربع القديم 
+                cancelPremove();
                 premove = { from: selectedSquare, to: square };
                 clearHighlights(); $('.square-' + selectedSquare).addClass('premove-highlight'); $('.square-' + square).addClass('premove-highlight');
                 selectedSquare = null; return;
@@ -402,7 +444,7 @@ $(document).ready(function() {
             if (move === null) { selectedSquare = null; return 'snapback'; } 
             selectedSquare = null; processLocalMove(move); return; 
         } else {
-            cancelPremove(); // مسح الإضاءة القديمة
+            cancelPremove();
             premove = { from: source, to: target };
             $('.square-' + source).addClass('premove-highlight'); $('.square-' + target).addClass('premove-highlight');
             selectedSquare = null; return 'snapback';
