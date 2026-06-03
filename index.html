@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Room - Ultimate Edition</title>
+    <title>Chess Room - Ultimate Fast Edition</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=11">
     
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -57,7 +57,7 @@
                 </select>
             </div>
             
-            <button id="createBtn" class="btn btn-primary" data-key="btnEnter">Enter Room</button>
+            <button id="createBtn" class="btn btn-primary" data-key="btnEnter" disabled>Connecting...</button>
         </div>
 
         <div id="gameArea" style="display: none; position: relative;" class="fade-in">
@@ -141,6 +141,6 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=11"></script>
 </body>
 </html>
