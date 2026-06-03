@@ -10,19 +10,11 @@ if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 const db = firebase.database();
 const auth = firebase.auth();
 
-auth.signInAnonymously().catch(function(error) {
-    console.error("Auth Error:", error.message);
-});
-
 $(document).ready(function() {
     var myUid = null;
     var myPresenceRef = null;
-    var connectedRef = db.ref('.info/connected'); // مراقب اتصال الجهاز
+    var connectedRef = db.ref('.info/connected');
     
-    auth.onAuthStateChanged(function(user) {
-        if (user) { myUid = user.uid; }
-    });
-
     var game = new Chess(), board = null;
     var whiteSeconds = 0, blackSeconds = 0, incrementSeconds = 0;
     var timerInterval = null, selectedSquare = null, gameStarted = false;
@@ -54,6 +46,9 @@ $(document).ready(function() {
             var key = $(this).data('key');
             if(translations[lang][key]) { if($(this).is('option')) $(this).text(translations[lang][key]); else $(this).html(translations[lang][key]); }
         });
+        
+        // إصلاح نص الزر أثناء التحميل
+        if (!myUid) { $('#createBtn').text(lang === 'ar' ? 'جاري الاتصال...' : 'Connecting...'); }
         if(board) board.resize();
     }
 
@@ -65,6 +60,17 @@ $(document).ready(function() {
 
     $('#langToggleBtn').click(function() { applyLanguage(currentLang === 'en' ? 'ar' : 'en'); });
     $('#themeChoice').change(function() { applyTheme($(this).val()); });
+
+    applyLanguage(currentLang); applyTheme(currentTheme);
+
+    // إصلاح مشكلة التعليق: لن يتم تفعيل الزر حتى يكتمل الاتصال المشفر
+    auth.signInAnonymously().catch(function(error) { console.error("Auth Error:", error.message); });
+    auth.onAuthStateChanged(function(user) {
+        if (user) { 
+            myUid = user.uid; 
+            $('#createBtn').prop('disabled', false).text(translations[currentLang].btnEnter);
+        }
+    });
 
     document.getElementById('board').addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
     $(document).on('contextmenu', '#board', function(e) { e.preventDefault(); cancelPremove(); });
@@ -122,15 +128,13 @@ $(document).ready(function() {
         }, 1000);
     }
 
-    // تجهيز نظام التواجد للسيرفر (Offline/Online)
     function setupPresence() {
         if (myPresenceRef) { myPresenceRef.onDisconnect().cancel(); }
         myPresenceRef = db.ref('rooms/' + currentRoomId + '/' + myPlayerColor + 'Online');
         connectedRef.on('value', function(snap) {
             if (snap.val() === true && myPresenceRef) {
-                // عندما ينقطع الاتصال، اجعل قيمتي "خطأ" أوتوماتيكياً
                 myPresenceRef.onDisconnect().set(false);
-                myPresenceRef.set(true); // أنا متصل الآن
+                myPresenceRef.set(true); 
             }
         });
     }
@@ -181,11 +185,6 @@ $(document).ready(function() {
         currentRoomId = $('#roomId').val().trim();
         if (!currentRoomId) return;
         
-        if (!myUid) {
-            alert(currentLang === 'ar' ? "جاري الاتصال الآمن، حاول مجدداً بعد ثانية..." : "Connecting securely, try again...");
-            return;
-        }
-        
         $(this).prop('disabled', true);
         if (activeRoomRef) activeRoomRef.off();
         activeRoomRef = db.ref('rooms/' + currentRoomId);
@@ -195,9 +194,7 @@ $(document).ready(function() {
             let minutes = parseInt($('#timeMinutes').val()) || 3; 
             incrementSeconds = parseInt($('#timeIncrement').val()) || 0;
             
-            let isCreator = false;
             let savedRole = localStorage.getItem('chess_role_' + currentRoomId);
-            
             isGameEndHandled = false; 
 
             if (savedRole && data && data.status === 'playing') {
@@ -206,7 +203,6 @@ $(document).ready(function() {
                 whiteSeconds = data.whiteSeconds; blackSeconds = data.blackSeconds; incrementSeconds = data.increment;
                 isWaiting = false;
             } else if (!snapshot.exists() || (data && data.status !== 'waiting' && data.status !== 'playing')) {
-                isCreator = true;
                 let colorsArr = ['white', 'black'];
                 let selectedColor = $('#colorChoice').val();
                 myPlayerColor = selectedColor === 'random' ? colorsArr[Math.floor(Math.random() * colorsArr.length)] : selectedColor;
@@ -237,15 +233,15 @@ $(document).ready(function() {
                 $('#createBtn').prop('disabled', false); return;
             }
             
-            // تشغيل التواجد
             setupPresence();
 
             $('#lobby').hide(); $('#endGameModal').hide(); $('#disconnectBanner').hide(); $('#gameArea').fadeIn(300); 
             
             if (!board) {
+                // إصلاح البطء: تم تسريع حركة القطع لتصبح مثل التطبيقات العالمية (40ms)
                 var config = { 
                     draggable: true, position: 'start', onDragStart: onDragStart, onDrop: onDrop, onSnapEnd: onSnapEnd, 
-                    moveSpeed: 100, snapbackSpeed: 100, 
+                    moveSpeed: 40, snapbackSpeed: 40, snapSpeed: 20, 
                     pieceTheme: function(piece) { return 'https://images.chesscomfiles.com/chess-themes/pieces/light/150/' + piece.toLowerCase() + '.png'; }
                 };
                 board = Chessboard('board', config); 
@@ -255,27 +251,32 @@ $(document).ready(function() {
             board.orientation(myPlayerColor); board.position(game.fen(), false);
             $('#movesHistory').text(game.pgn()); clearHighlights(); cancelPremove(); updateCapturedPieces();
             updateTimersDisplay(); $('#resignBtn').show(); $('#drawOfferBtn').show(); $('.timer').removeClass('active');
-            gameStarted = false; 
             
-            if (isWaiting) { $('#waitingOverlay').fadeIn(200); } else if (data && data.status !== 'playing') { runCountdown(); }
+            // إصلاح مشكلة العودة والمربعات المضيئة: إخبار الكود أن اللعبة مفعلة فور العودة
+            if (isWaiting) { 
+                $('#waitingOverlay').fadeIn(200); 
+            } else if (data && data.status === 'playing') {
+                gameStarted = true;
+                updateActiveTimerStyle();
+                startTimer();
+            } else {
+                runCountdown();
+            }
 
             activeRoomRef.on('value', function(snap) {
                 let d = snap.val(); if (!d) return;
 
-                // تحديث حالة اتصال الخصم
+                // إصلاح شريط الخصم ليكون ذكياً ولا يظهر إلا عند الانقطاع الفعلي (=== false)
                 if (d.playersCount === 2) {
                     let oppColor = myPlayerColor === 'white' ? 'black' : 'white';
                     let isOppOnline = d[oppColor + 'Online'];
                     
-                    if (isOppOnline) {
+                    if (isOppOnline === false) {
+                        $('#oppPresence').addClass('presence-offline').removeClass('presence-online');
+                        if (gameStarted && !game.game_over()) { $('#disconnectBanner').fadeIn(200); }
+                    } else {
                         $('#oppPresence').addClass('presence-online').removeClass('presence-offline');
                         $('#disconnectBanner').fadeOut(200);
-                    } else {
-                        $('#oppPresence').addClass('presence-offline').removeClass('presence-online');
-                        // لا نظهر الرسالة إلا إذا كانت اللعبة قد بدأت فعلياً ولم تنتهِ
-                        if (gameStarted && !game.game_over()) {
-                            $('#disconnectBanner').fadeIn(200);
-                        }
                     }
                 }
 
@@ -518,5 +519,4 @@ $(document).ready(function() {
     }
     function onSnapEnd () { board.position(game.fen()); }
     
-    applyLanguage(currentLang); applyTheme(currentTheme);
 });
