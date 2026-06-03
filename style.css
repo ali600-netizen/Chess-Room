@@ -1,27 +1,17 @@
 :root {
-    --bg-color: #0b0f19;
-    --panel-bg: #151b2b;
-    --border-color: #2a3441;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --board-light: #cbd5e1;
-    --board-dark: #334155;
-    --btn-bg: #cbd5e1;
-    --btn-text: #0f172a;
-    --btn-hover: #f1f5f9;
-}
-
-body.theme-chesscom {
-    --bg-color: #312e2b;
-    --panel-bg: #262421;
-    --border-color: #3c3934;
-    --text-main: #ffffff;
-    --text-muted: #bababa;
-    --board-light: #eeeed2;
-    --board-dark: #769656;
-    --btn-bg: #81b64c;
-    --btn-text: #ffffff;
-    --btn-hover: #95c95c;
+    /* الألوان الملكية الجديدة */
+    --bg-color: #D2D2D6; /* الرمادي الفاتح للخلفية */
+    --panel-bg: #F4F1EA; /* العاجي للوحات */
+    --border-color: #C9A86A; /* الذهبي المتوسط للحدود */
+    --text-main: #0B174D; /* الأزرق الكحلي الداكن للنصوص الأساسية */
+    --text-muted: #2C447F; /* الأزرق المتوسط للنصوص الثانوية */
+    --board-light: #F4F1EA; /* العاجي لمربعات الرقعة */
+    --board-dark: #1A2E73; /* الأزرق الملكي الداكن لمربعات الرقعة */
+    --btn-bg: #0B174D; /* زر أساسي كحلي */
+    --btn-text: #F4F1EA; /* نص الزر عاجي */
+    --btn-hover: #1A2E73; /* أزرق ملكي عند التمرير */
+    --gold-dark: #A8834C;
+    --gold-light: #D9C18A;
 }
 
 * { 
@@ -35,7 +25,7 @@ body {
     background-color: var(--bg-color); 
     color: var(--text-main); 
     margin: 0; 
-    padding: 5px; 
+    padding: 10px; 
     display: flex; 
     justify-content: center; 
     min-height: 100vh; 
@@ -53,13 +43,13 @@ body {
 
 h1 { text-align: center; color: var(--text-main); font-weight: 800; margin: 5px 0 15px 0; font-size: 2.2rem; text-transform: uppercase; letter-spacing: 1px;}
 
-.panel { background-color: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+.panel { background-color: var(--panel-bg); border: 2px solid var(--border-color); border-radius: 12px; padding: 25px; box-shadow: 0 10px 30px rgba(11, 23, 77, 0.15); }
 
-h3 { margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; color: var(--text-main); font-weight: 700; font-size: 1.2rem; }
+h3 { margin-top: 0; border-bottom: 1px solid var(--gold-light); padding-bottom: 12px; color: var(--text-main); font-weight: 700; font-size: 1.3rem; }
 
-.form-group { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--bg-color); border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 15px;}
+.form-group { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--bg-color); border-radius: 8px; border: 1px solid var(--gold-light); margin-bottom: 15px;}
 
-.form-group label { color: var(--text-muted); font-size: 0.95rem; font-weight: 700; }
+.form-group label { color: var(--text-muted); font-size: 1rem; font-weight: 700; }
 
 select, input { 
     background: transparent; border: none; color: var(--text-main); 
@@ -73,89 +63,86 @@ select option { background-color: var(--panel-bg); color: var(--text-main); }
 input[type="number"] { border-bottom: 1px solid var(--border-color); border-radius: 0; padding-bottom: 2px; }
 
 .btn { 
-    width: 100%; padding: 16px; background: var(--btn-bg); color: var(--btn-text); 
-    border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 800; cursor: pointer; 
+    width: 100%; padding: 14px; background: var(--btn-bg); color: var(--btn-text); 
+    border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; 
+    box-shadow: 0 4px 6px rgba(11, 23, 77, 0.2);
 }
 
-.btn:hover { background: var(--btn-hover); }
-.btn-danger { background: #ef4444; color: white; margin-top: 12px; }
-.btn-danger:hover { background: #dc2626; }
-.btn-secondary { background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border-color); }
+.btn:hover { background: var(--btn-hover); transform: translateY(-1px); }
+.btn-danger { background: var(--gold-dark); color: var(--panel-bg); margin-top: 12px; }
+.btn-danger:hover { background: #8a6a3b; }
+.btn-secondary { background: var(--panel-bg); color: var(--text-main); border: 2px solid var(--border-color); box-shadow: none; }
+.btn-secondary:hover { background: var(--bg-color); }
 
-.player-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 2px; }
-.player-name { font-weight: 700; font-size: 1.1rem; color: var(--text-main); }
+.player-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 4px; }
+.player-name { font-weight: 800; font-size: 1.1rem; color: var(--text-main); }
 
 .timer { 
     background: var(--panel-bg); padding: 6px 14px; border-radius: 6px; 
-    font-family: monospace; font-size: 1.5rem; font-weight: bold; border: 1px solid var(--border-color);
+    font-family: monospace; font-size: 1.5rem; font-weight: bold; border: 2px solid var(--gold-light);
+    color: var(--text-main);
 }
-.timer.active { border-color: var(--board-light); background: var(--border-color); }
-.timer.danger { color: #ef4444; border-color: #ef4444; }
+.timer.active { border-color: var(--text-main); background: var(--gold-light); color: var(--text-main); }
+.timer.danger { color: #dc2626; border-color: #dc2626; }
 
 .board-wrapper { 
-    width: 100%; margin: 2px 0; border-radius: 8px; overflow: hidden; 
-    box-shadow: 0 15px 35px rgba(0,0,0,0.6); position: relative;
+    width: 100%; margin: 2px 0; border-radius: 4px; overflow: hidden; 
+    box-shadow: 0 12px 25px rgba(11, 23, 77, 0.25); position: relative;
+    border: 3px solid var(--border-color);
     touch-action: none !important;
 }
 
-.countdown-overlay {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85); color: #ffffff;
-    display: flex; justify-content: center; align-items: center;
-    font-size: 6rem; font-weight: 800; z-index: 100; pointer-events: none;
-}
-
+/* ألوان الرقعة الاحترافية */
 .white-1e1d7 { background-color: var(--board-light) !important; color: var(--board-dark) !important; }
 .black-3c85d { background-color: var(--board-dark) !important; color: var(--board-light) !important; }
 
-.highlight { background-color: rgba(242, 245, 105, 0.5) !important; }
-.premove-highlight { background-color: rgba(235, 97, 80, 0.6) !important; } 
+/* تأثيرات التحديد (أنيقة وغير مزعجة) */
+.highlight { background-color: rgba(217, 193, 138, 0.6) !important; } /* لون ذهبي فاتح شفاف للتحديد */
+.premove-highlight { background-color: rgba(168, 131, 76, 0.7) !important; } /* لون ذهبي داكن للبري موف */
 
-.legal-move::after { content: ''; position: absolute; top: 50%; left: 50%; width: 25%; height: 25%; background-color: rgba(0, 0, 0, 0.3); border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; }
-.legal-move-capture::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; box-sizing: border-box; border: 5px solid rgba(0, 0, 0, 0.3); border-radius: 50%; z-index: 10; }
+.legal-move::after { content: ''; position: absolute; top: 50%; left: 50%; width: 25%; height: 25%; background-color: rgba(11, 23, 77, 0.3); border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; }
+.legal-move-capture::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; box-sizing: border-box; border: 5px solid rgba(11, 23, 77, 0.3); border-radius: 50%; z-index: 10; }
 
-.moves-box { background: var(--panel-bg); padding: 12px; border-radius: 10px; margin-top: 12px; max-height: 85px; overflow-y: auto; font-family: monospace; font-size: 1.1rem; color: var(--text-main); border: 1px solid var(--border-color); direction: ltr; text-align: left; }
+.moves-box { background: var(--panel-bg); padding: 12px; border-radius: 8px; margin-top: 12px; max-height: 85px; overflow-y: auto; font-family: monospace; font-size: 1.1rem; color: var(--text-main); border: 1px solid var(--border-color); direction: ltr; text-align: left; }
 
 .action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
 .action-buttons .btn { margin-top: 0; flex: 1 1 45%; }
 .action-buttons .btn-danger { flex: 1 1 100%; margin-top: 2px; }
-/* تأثيرات شاشة الانتظار والبحث عن خصم */
+
+/* شاشات التراكب (أنيقة وراقية) */
 .status-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85); color: #ffffff;
+    background: rgba(11, 23, 77, 0.9); color: var(--board-light);
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-    font-size: 6rem; font-weight: 800; z-index: 100;
+    font-size: 5rem; font-weight: 800; z-index: 100;
 }
 
 .spinner {
-    width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3);
-    border-radius: 50%; border-top-color: #fff;
+    width: 40px; height: 40px; border: 4px solid rgba(244, 241, 234, 0.2);
+    border-radius: 50%; border-top-color: var(--gold-light);
     animation: spin 1s ease-in-out infinite; margin-bottom: 20px;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-#waitingOverlay span { font-size: 1.5rem; text-align: center; }
-
-/* اللوحة العصرية لنهاية اللعبة */
+/* اللوحة العصرية لنهاية اللعبة (Modal الفخم) */
 .modal-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; 
-    z-index: 200; backdrop-filter: blur(5px); border-radius: 8px;
+    background: rgba(11, 23, 77, 0.7); display: flex; justify-content: center; align-items: center; 
+    z-index: 200; backdrop-filter: blur(4px); border-radius: 4px;
 }
 .modal-content {
-    background: var(--panel-bg); border: 1px solid var(--border-color); 
-    border-radius: 16px; padding: 25px; text-align: center; 
-    width: 85%; max-width: 320px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    background: var(--panel-bg); border: 2px solid var(--border-color); 
+    border-radius: 12px; padding: 25px; text-align: center; 
+    width: 85%; max-width: 320px; box-shadow: 0 20px 40px rgba(11, 23, 77, 0.5);
 }
-.modal-content h2 { margin: 0 0 5px 0; font-size: 2.2rem; font-weight: 800; color: var(--text-main); }
-.modal-content p { margin: 0 0 20px 0; color: var(--text-muted); font-size: 1.1rem; font-weight: 500;}
+.modal-content h2 { margin: 0 0 5px 0; font-size: 2rem; font-weight: 800; color: var(--text-main); }
+.modal-content p { margin: 0 0 20px 0; color: var(--text-muted); font-size: 1.1rem; font-weight: 700;}
 
 .stats-row { display: flex; justify-content: center; margin-bottom: 20px; }
-.stat-box { background: var(--bg-color); padding: 12px 25px; border-radius: 12px; border: 1px solid var(--border-color); }
+.stat-box { background: var(--bg-color); padding: 12px 25px; border-radius: 8px; border: 1px solid var(--gold-light); }
 .stat-value { display: block; font-size: 2rem; font-weight: 800; color: var(--text-main); line-height: 1; }
 .stat-label { font-size: 0.95rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
 
 .modal-actions { display: flex; flex-direction: column; gap: 10px; }
 .modal-actions .btn { margin: 0; }
-
