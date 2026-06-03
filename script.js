@@ -1,4 +1,4 @@
-                            const firebaseConfig = {
+const firebaseConfig = {
     apiKey: "AIzaSyCWL3DohN_BVmwlDjLYP_UohoKqnw4ylzU",
     authDomain: "chessroom-ca23f.firebaseapp.com",
     databaseURL: "https://chessroom-ca23f-default-rtdb.firebaseio.com/",
@@ -108,7 +108,7 @@ $(document).ready(function() {
         }, 1000);
     }
 
-    // --- حساب القطع المأكولة ونقاط التفوق (Material Advantage) ---
+    // --- حساب القطع المأكولة ونقاط التفوق بدقة ---
     function updateCapturedPieces() {
         if (!game) return;
         const pVals = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
@@ -127,7 +127,6 @@ $(document).ready(function() {
         let capByW = []; // قطع خسرها الأسود
         let capByB = []; // قطع خسرها الأبيض
 
-        // ترتيب عرض القطع كلاسيكياً (وزير ثم رخ ثم فيل ثم حصان ثم بيدق)
         ['q', 'r', 'b', 'n', 'p'].forEach(type => {
             let wLost = initC.w[type] - curC.w[type];
             let bLost = initC.b[type] - curC.b[type];
@@ -225,14 +224,15 @@ $(document).ready(function() {
                     isWaiting = false; runCountdown();
                 }
 
+                // إصلاح إظهار رسالة الموافقة/الرفض
                 if (d.action && d.action.type && d.action.by !== myPlayerColor) {
                     if (d.action.state === 'offered') {
                         let msg = d.action.type === 'rematch' ? translations[currentLang].msgRematchOffer : translations[currentLang].msgDrawOffer;
                         $('#interactiveMsg').text(msg);
-                        // حفظ نوع الأكشن في الداتا للزر
                         $('#acceptActionBtn').data('actionType', d.action.type);
                         $('#declineActionBtn').data('actionType', d.action.type);
-                        $('#interactiveOverlay').fadeIn(200);
+                        // stop(true,true) يمنع اختفاء الشاشة السريع
+                        $('#interactiveOverlay').stop(true, true).fadeIn(200);
                     } else if (d.action.state === 'declined') {
                         $('#interactiveOverlay').fadeOut(200);
                         $('#drawOfferBtn').prop('disabled', false).text(translations[currentLang].btnDraw);
@@ -310,7 +310,6 @@ $(document).ready(function() {
         $(this).prop('disabled', true).text('...');
     });
 
-    // تم إصلاح الأزرار لتأخذ النوع من الزر نفسه
     $('#acceptActionBtn').click(function() {
         let actionType = $(this).data('actionType');
         let updateData = { action: { type: actionType, state: 'accepted', by: myPlayerColor } };
@@ -357,7 +356,7 @@ $(document).ready(function() {
     }
 
     function handleServerGameEnd(winnerColor, reasonTxt) { 
-        gameStarted = false; stopTimer(); $('#resignBtn').hide(); $('#drawOfferBtn').hide(); $('#interactiveOverlay').fadeOut(200);
+        gameStarted = false; stopTimer(); $('#resignBtn').hide(); $('#drawOfferBtn').hide(); 
         sfx.gameEnd.play().catch(()=>{}); 
         
         let titleTxt = translations[currentLang].titleDraw;
@@ -367,7 +366,10 @@ $(document).ready(function() {
         $('#endGameTitle').text(titleTxt); $('#endGameReason').text(reasonTxt);
         $('#endGameMoves').text(Math.ceil(game.history().length / 2));
         
-        setTimeout(() => { $('#endGameModal').fadeIn(300); }, 300); 
+        // إصلاح اختفاء الأزرار اللانهائي، تظهر اللوحة مرة واحدة وتترك الطبقة التفاعلية ظاهرة
+        if (!$('#endGameModal').is(':visible')) {
+            setTimeout(() => { $('#endGameModal').fadeIn(300); }, 300); 
+        }
     }
 
     function cancelPremove() { premove = null; $('.square-55d63').removeClass('premove-highlight'); }
@@ -386,7 +388,7 @@ $(document).ready(function() {
         else sfx.move.play().catch(()=>{});
         
         if (move.color === 'w') whiteSeconds += incrementSeconds; else blackSeconds += incrementSeconds;
-        updateTimersDisplay(); updateActiveTimerStyle(); startTimer(); updateCapturedPieces();
+        updateTimersDisplay(); updateActiveTimerStyle(); updateCapturedPieces();
         $('#movesHistory').text(game.pgn()); var movesBox = document.getElementById("movesHistory"); movesBox.scrollTop = movesBox.scrollHeight;
         
         activeRoomRef.update({ fen: game.fen(), pgn: game.pgn(), lastMove: { from: move.from, to: move.to, promotion: move.promotion || '' }, whiteSeconds: whiteSeconds, blackSeconds: blackSeconds });
