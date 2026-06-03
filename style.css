@@ -1,17 +1,33 @@
 :root {
-    /* الألوان الملكية الجديدة */
-    --bg-color: #D2D2D6; /* الرمادي الفاتح للخلفية */
-    --panel-bg: #F4F1EA; /* العاجي للوحات */
-    --border-color: #C9A86A; /* الذهبي المتوسط للحدود */
-    --text-main: #0B174D; /* الأزرق الكحلي الداكن للنصوص الأساسية */
-    --text-muted: #2C447F; /* الأزرق المتوسط للنصوص الثانوية */
-    --board-light: #F4F1EA; /* العاجي لمربعات الرقعة */
-    --board-dark: #1A2E73; /* الأزرق الملكي الداكن لمربعات الرقعة */
-    --btn-bg: #0B174D; /* زر أساسي كحلي */
-    --btn-text: #F4F1EA; /* نص الزر عاجي */
-    --btn-hover: #1A2E73; /* أزرق ملكي عند التمرير */
+    /* الثيم الملكي (النيلي والذهبي الفخم) */
+    --bg-color: #D2D2D6; 
+    --panel-bg: #F4F1EA; 
+    --border-color: #C9A86A; 
+    --text-main: #0B174D; 
+    --text-muted: #2C447F; 
+    --board-light: #F4F1EA; 
+    --board-dark: #1A2E73; 
+    --btn-bg: #0B174D; 
+    --btn-text: #F4F1EA; 
+    --btn-hover: #1A2E73; 
     --gold-dark: #A8834C;
     --gold-light: #D9C18A;
+}
+
+body.theme-chesscom {
+    /* الثيم الكلاسيكي (الأخضر والداكن) تم إعادته بنجاح */
+    --bg-color: #312e2b;
+    --panel-bg: #262421;
+    --border-color: #3c3934;
+    --text-main: #ffffff;
+    --text-muted: #bababa;
+    --board-light: #eeeed2;
+    --board-dark: #769656;
+    --btn-bg: #81b64c;
+    --btn-text: #ffffff;
+    --btn-hover: #95c95c;
+    --gold-dark: #81b64c;
+    --gold-light: #eeeed2;
 }
 
 * { 
@@ -65,7 +81,7 @@ input[type="number"] { border-bottom: 1px solid var(--border-color); border-radi
 .btn { 
     width: 100%; padding: 14px; background: var(--btn-bg); color: var(--btn-text); 
     border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; 
-    box-shadow: 0 4px 6px rgba(11, 23, 77, 0.2);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .btn:hover { background: var(--btn-hover); transform: translateY(-1px); }
@@ -87,21 +103,19 @@ input[type="number"] { border-bottom: 1px solid var(--border-color); border-radi
 
 .board-wrapper { 
     width: 100%; margin: 2px 0; border-radius: 4px; overflow: hidden; 
-    box-shadow: 0 12px 25px rgba(11, 23, 77, 0.25); position: relative;
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25); position: relative;
     border: 3px solid var(--border-color);
     touch-action: none !important;
 }
 
-/* ألوان الرقعة الاحترافية */
 .white-1e1d7 { background-color: var(--board-light) !important; color: var(--board-dark) !important; }
 .black-3c85d { background-color: var(--board-dark) !important; color: var(--board-light) !important; }
 
-/* تأثيرات التحديد (أنيقة وغير مزعجة) */
-.highlight { background-color: rgba(217, 193, 138, 0.6) !important; } /* لون ذهبي فاتح شفاف للتحديد */
-.premove-highlight { background-color: rgba(168, 131, 76, 0.7) !important; } /* لون ذهبي داكن للبري موف */
+.highlight { background-color: rgba(217, 193, 138, 0.6) !important; } 
+.premove-highlight { background-color: rgba(168, 131, 76, 0.7) !important; }
 
-.legal-move::after { content: ''; position: absolute; top: 50%; left: 50%; width: 25%; height: 25%; background-color: rgba(11, 23, 77, 0.3); border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; }
-.legal-move-capture::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; box-sizing: border-box; border: 5px solid rgba(11, 23, 77, 0.3); border-radius: 50%; z-index: 10; }
+.legal-move::after { content: ''; position: absolute; top: 50%; left: 50%; width: 25%; height: 25%; background-color: rgba(0, 0, 0, 0.3); border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; }
+.legal-move-capture::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; box-sizing: border-box; border: 5px solid rgba(0, 0, 0, 0.3); border-radius: 50%; z-index: 10; }
 
 .moves-box { background: var(--panel-bg); padding: 12px; border-radius: 8px; margin-top: 12px; max-height: 85px; overflow-y: auto; font-family: monospace; font-size: 1.1rem; color: var(--text-main); border: 1px solid var(--border-color); direction: ltr; text-align: left; }
 
@@ -109,32 +123,30 @@ input[type="number"] { border-bottom: 1px solid var(--border-color); border-radi
 .action-buttons .btn { margin-top: 0; flex: 1 1 45%; }
 .action-buttons .btn-danger { flex: 1 1 100%; margin-top: 2px; }
 
-/* شاشات التراكب (أنيقة وراقية) */
 .status-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(11, 23, 77, 0.9); color: var(--board-light);
+    background: rgba(0, 0, 0, 0.85); color: #ffffff;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     font-size: 5rem; font-weight: 800; z-index: 100;
 }
 
 .spinner {
-    width: 40px; height: 40px; border: 4px solid rgba(244, 241, 234, 0.2);
+    width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%; border-top-color: var(--gold-light);
     animation: spin 1s ease-in-out infinite; margin-bottom: 20px;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* اللوحة العصرية لنهاية اللعبة (Modal الفخم) */
 .modal-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(11, 23, 77, 0.7); display: flex; justify-content: center; align-items: center; 
+    background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; 
     z-index: 200; backdrop-filter: blur(4px); border-radius: 4px;
 }
 .modal-content {
     background: var(--panel-bg); border: 2px solid var(--border-color); 
     border-radius: 12px; padding: 25px; text-align: center; 
-    width: 85%; max-width: 320px; box-shadow: 0 20px 40px rgba(11, 23, 77, 0.5);
+    width: 85%; max-width: 320px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 .modal-content h2 { margin: 0 0 5px 0; font-size: 2rem; font-weight: 800; color: var(--text-main); }
 .modal-content p { margin: 0 0 20px 0; color: var(--text-muted); font-size: 1.1rem; font-weight: 700;}
