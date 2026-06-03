@@ -1,4 +1,4 @@
-const firebaseConfig = {
+           const firebaseConfig = {
     apiKey: "AIzaSyCWL3DohN_BVmwlDjLYP_UohoKqnw4ylzU",
     authDomain: "chessroom-ca23f.firebaseapp.com",
     databaseURL: "https://chessroom-ca23f-default-rtdb.firebaseio.com/",
@@ -15,6 +15,9 @@ $(document).ready(function() {
     var timerInterval = null, selectedSquare = null, gameStarted = false;
     var premove = null, isWaiting = false; 
     var currentRoomId = null, myPlayerColor = 'white', activeRoomRef = null;
+    
+    // القفل الذهبي لمنع اختفاء الأزرار اللانهائي
+    var isGameEndHandled = false; 
 
     const sfx = {
         move: new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3'),
@@ -108,7 +111,6 @@ $(document).ready(function() {
         }, 1000);
     }
 
-    // --- حساب القطع المأكولة ونقاط التفوق بدقة ---
     function updateCapturedPieces() {
         if (!game) return;
         const pVals = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
@@ -124,8 +126,8 @@ $(document).ready(function() {
             }
         }
 
-        let capByW = []; // قطع خسرها الأسود
-        let capByB = []; // قطع خسرها الأبيض
+        let capByW = []; 
+        let capByB = []; 
 
         ['q', 'r', 'b', 'n', 'p'].forEach(type => {
             let wLost = initC.w[type] - curC.w[type];
@@ -166,6 +168,8 @@ $(document).ready(function() {
             
             let isCreator = false;
             let savedRole = localStorage.getItem('chess_role_' + currentRoomId);
+            
+            isGameEndHandled = false; // تصفير القفل عند الدخول
 
             if (savedRole && data && data.status === 'playing') {
                 myPlayerColor = savedRole;
@@ -224,35 +228,36 @@ $(document).ready(function() {
                     isWaiting = false; runCountdown();
                 }
 
-                // إصلاح إظهار رسالة الموافقة/الرفض
                 if (d.action && d.action.type && d.action.by !== myPlayerColor) {
                     if (d.action.state === 'offered') {
                         let msg = d.action.type === 'rematch' ? translations[currentLang].msgRematchOffer : translations[currentLang].msgDrawOffer;
                         $('#interactiveMsg').text(msg);
                         $('#acceptActionBtn').data('actionType', d.action.type);
                         $('#declineActionBtn').data('actionType', d.action.type);
-                        // stop(true,true) يمنع اختفاء الشاشة السريع
+                        
+                        // إجبار الطبقة على الظهور مهما كانت حالة اللوحة النهائية
                         $('#interactiveOverlay').stop(true, true).fadeIn(200);
                     } else if (d.action.state === 'declined') {
                         $('#interactiveOverlay').fadeOut(200);
                         $('#drawOfferBtn').prop('disabled', false).text(translations[currentLang].btnDraw);
                         $('#modalRematchBtn').prop('disabled', false).text(translations[currentLang].btnRematch);
-                        if (d.action.by === myPlayerColor) { setTimeout(() => activeRoomRef.update({ action: null }), 500); }
+                        
+                        // الشخص الذي تم رفض طلبه هو من يمسح الأكشن لتنظيف السيرفر
+                        if (d.action.by !== myPlayerColor) { setTimeout(() => activeRoomRef.update({ action: null }), 500); }
                     }
                 }
 
                 if (d.action && d.action.state === 'accepted') {
                     $('#interactiveOverlay').fadeOut(200);
-                    if (d.action.type === 'draw') {
-                        activeRoomRef.update({ status: 'draw_agreed', action: null });
-                    } else if (d.action.type === 'rematch') {
+                    if (d.action.type === 'rematch') {
+                        isGameEndHandled = false; // تصفير القفل عند بدء إعادة التحدي
                         $('#endGameModal').fadeOut(200); game.reset(); board.position(game.fen());
                         whiteSeconds = d.whiteSeconds; blackSeconds = d.blackSeconds; incrementSeconds = d.increment;
                         $('#movesHistory').text(''); clearHighlights(); cancelPremove(); updateCapturedPieces();
                         $('#resignBtn').show(); $('#drawOfferBtn').show(); $('.timer').removeClass('active');
                         gameStarted = false; runCountdown();
                     }
-                    if (d.action.by !== myPlayerColor) { activeRoomRef.update({ action: null }); } 
+                    if (d.action.by === myPlayerColor && d.action.type !== 'draw') { setTimeout(() => activeRoomRef.update({ action: null }), 500); } 
                 }
 
                 if (d.lastMove && d.status === 'playing' && d.fen !== game.fen()) {
@@ -277,12 +282,17 @@ $(document).ready(function() {
                     executePremove();
                 }
 
-                if (d.status === 'resigned_w' || d.status === 'resigned_b' || d.status === 'timeout_w' || d.status === 'timeout_b' || d.status === 'draw_agreed') {
+                // تنفيذ أمر السيرفر بنهاية اللعبة لمرة واحدة فقط
+                if (d.status === 'resigned_w' || d.status === 'resigned_b' || d.status === 'timeout_w' || d.status === 'timeout_b' || d.status === 'draw_agreed' || d.status === 'checkmate_w' || d.status === 'checkmate_b' || d.status === 'draw_auto') {
+                    
                     if (d.status === 'resigned_w') { handleServerGameEnd('b', translations[currentLang].rsnResign); } 
                     else if (d.status === 'resigned_b') { handleServerGameEnd('w', translations[currentLang].rsnResign); } 
                     else if (d.status === 'timeout_w') { handleServerGameEnd('b', translations[currentLang].rsnTimeout); } 
                     else if (d.status === 'timeout_b') { handleServerGameEnd('w', translations[currentLang].rsnTimeout); }
                     else if (d.status === 'draw_agreed') { handleServerGameEnd(null, translations[currentLang].rsnAgreed); }
+                    else if (d.status === 'checkmate_w') { handleServerGameEnd('w', translations[currentLang].rsnCheckmate); }
+                    else if (d.status === 'checkmate_b') { handleServerGameEnd('b', translations[currentLang].rsnCheckmate); }
+                    else if (d.status === 'draw_auto') { handleServerGameEnd(null, translations[currentLang].rsnStalemate); }
                 }
             });
             $('#createBtn').prop('disabled', false); 
@@ -320,12 +330,18 @@ $(document).ready(function() {
             updateData.pgn = ''; updateData.lastMove = null;
             updateData.whiteSeconds = minutes * 60; updateData.blackSeconds = minutes * 60;
             updateData.status = 'waiting'; 
+        } else if (actionType === 'draw') {
+            updateData.status = 'draw_agreed';
         }
+        
+        $('#interactiveOverlay').fadeOut(200);
         activeRoomRef.update(updateData);
     });
 
+    // إصلاح زر الرفض ليخفي الشاشة محلياً فوراً ويرسل للسيرفر
     $('#declineActionBtn').click(function() {
         let actionType = $(this).data('actionType');
+        $('#interactiveOverlay').fadeOut(200); 
         activeRoomRef.update({ action: { type: actionType, state: 'declined', by: myPlayerColor } });
     });
 
@@ -346,17 +362,18 @@ $(document).ready(function() {
         if (game.in_checkmate()) {
             let winnerColor = game.turn() === 'w' ? 'b' : 'w';
             activeRoomRef.update({ status: winnerColor === 'w' ? 'checkmate_w' : 'checkmate_b' });
-            handleServerGameEnd(winnerColor, translations[currentLang].rsnCheckmate);
         } else if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
-            if (game.history().length > 4) { 
-                activeRoomRef.update({ status: 'draw_auto' });
-                handleServerGameEnd(null, translations[currentLang].rsnStalemate); 
-            }
+            if (game.history().length > 4) { activeRoomRef.update({ status: 'draw_auto' }); }
         }
     }
 
+    // إضافة القفل الذهبي هنا لمنع اللوب
     function handleServerGameEnd(winnerColor, reasonTxt) { 
+        if (isGameEndHandled) return; 
+        isGameEndHandled = true;
+
         gameStarted = false; stopTimer(); $('#resignBtn').hide(); $('#drawOfferBtn').hide(); 
+        
         sfx.gameEnd.play().catch(()=>{}); 
         
         let titleTxt = translations[currentLang].titleDraw;
@@ -366,10 +383,7 @@ $(document).ready(function() {
         $('#endGameTitle').text(titleTxt); $('#endGameReason').text(reasonTxt);
         $('#endGameMoves').text(Math.ceil(game.history().length / 2));
         
-        // إصلاح اختفاء الأزرار اللانهائي، تظهر اللوحة مرة واحدة وتترك الطبقة التفاعلية ظاهرة
-        if (!$('#endGameModal').is(':visible')) {
-            setTimeout(() => { $('#endGameModal').fadeIn(300); }, 300); 
-        }
+        setTimeout(() => { $('#endGameModal').fadeIn(300); }, 300); 
     }
 
     function cancelPremove() { premove = null; $('.square-55d63').removeClass('premove-highlight'); }
