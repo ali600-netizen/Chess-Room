@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Room - Secure Edition</title>
+    <title>Chess Room - Ultimate Edition</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
@@ -63,7 +63,9 @@
         <div id="gameArea" style="display: none; position: relative;" class="fade-in">
             <div class="player-bar">
                 <div class="player-info">
-                    <div class="player-avatar opp-avatar"></div>
+                    <div class="player-avatar opp-avatar" style="position: relative;">
+                        <div class="presence-dot" id="oppPresence"></div>
+                    </div>
                     <div class="player-details">
                         <span class="player-name" data-key="playerOpponent">Opponent</span>
                         <div class="captured-pieces" id="topCaptured"></div>
@@ -73,6 +75,8 @@
             </div>
             
             <div class="board-wrapper">
+                <div id="disconnectBanner" class="disconnect-banner" data-key="msgDisconnected">Opponent disconnected...</div>
+
                 <div id="waitingOverlay" class="status-overlay" style="display: none;">
                     <div class="spinner"></div>
                     <span data-key="msgWaiting" class="overlay-text">Waiting for opponent...</span>
@@ -94,7 +98,9 @@
 
             <div class="player-bar">
                 <div class="player-info">
-                    <div class="player-avatar my-avatar"></div>
+                    <div class="player-avatar my-avatar" style="position: relative;">
+                        <div class="presence-dot presence-online" id="myPresence"></div>
+                    </div>
                     <div class="player-details">
                         <span class="player-name" data-key="playerYou">You</span>
                         <div class="captured-pieces" id="bottomCaptured"></div>
