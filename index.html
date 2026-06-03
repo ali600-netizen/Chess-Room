@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Room - Online Pro</title>
+    <title>Chess Room - Online Pro v3</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
@@ -59,7 +59,7 @@
             <button id="createBtn" class="btn" data-key="btnEnter">Enter Room</button>
         </div>
 
-        <div id="gameArea" style="display: none;">
+        <div id="gameArea" style="display: none; position: relative;">
             <div class="player-bar">
                 <span class="player-name" data-key="playerOpponent">Opponent</span>
                 <div class="timer" id="topTimer">00:00</div>
@@ -71,10 +71,12 @@
                     <span data-key="msgWaiting">Waiting for opponent...</span>
                 </div>
                 <div id="countdownOverlay" class="status-overlay" style="display: none;">3</div>
+                
                 <div id="rematchOfferOverlay" class="status-overlay" style="display: none;">
-                    <span data-key="msgRematchOffer" style="font-size:1.5rem; margin-bottom:15px;">Opponent offered a rematch!</span>
-                    <div style="display:flex; gap:10px;">
+                    <span data-key="msgRematchOffer" style="font-size:1.5rem; margin-bottom:15px; text-align:center;">Opponent offered a rematch!</span>
+                    <div style="display:flex; gap:15px; width: 80%;">
                         <button id="acceptRematchBtn" class="btn" data-key="btnAccept">Accept</button>
+                        <button id="declineRematchBtn" class="btn btn-danger" data-key="btnDecline">Decline</button>
                     </div>
                 </div>
 
@@ -88,12 +90,28 @@
 
             <div class="moves-box" id="movesHistory"></div>
             
-            <button id="resignBtn" class="btn btn-danger" data-key="btnResign">Resign</button>
-            
-            <div id="endGameActions" class="action-buttons" style="display: none;">
-                <button id="copyPgnBtn" class="btn btn-secondary" data-key="btnCopy">Copy PGN</button>
-                <button id="rematchBtn" class="btn" data-key="btnRematch">Rematch</button>
-                <button id="homeBtn" class="btn btn-danger" data-key="btnHome">Main Menu</button>
+            <div style="display: flex; gap: 10px; margin-top: 12px;">
+                <button id="resignBtn" class="btn btn-danger" style="margin-top: 0;" data-key="btnResign">Resign</button>
+                <button id="copyPgnBtn" class="btn btn-secondary" style="margin-top: 0;" data-key="btnCopy">Copy PGN</button>
+            </div>
+
+            <div id="endGameModal" class="modal-overlay" style="display: none;">
+                <div class="modal-content">
+                    <h2 id="endGameTitle">You Won!</h2>
+                    <p id="endGameReason">by Checkmate</p>
+                    
+                    <div class="stats-row">
+                        <div class="stat-box">
+                            <span class="stat-value" id="endGameMoves">0</span>
+                            <span class="stat-label" data-key="labelMoves">Moves</span>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button id="modalRematchBtn" class="btn" data-key="btnRematch">Rematch</button>
+                        <button id="modalHomeBtn" class="btn btn-secondary" data-key="btnHome">Main Menu</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
