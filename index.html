@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Room - Online Pro v3</title>
+    <title>Chess Room - Royal Edition</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
@@ -11,9 +11,8 @@
     
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
-<body class="theme-silver">
+<body>
     <div class="container">
         <div class="top-bar">
             <button id="langToggleBtn" class="lang-btn">العربية</button>
@@ -47,14 +46,6 @@
                     <option value="black" data-key="colorBlack">Black</option>
                 </select>
             </div>
-
-            <div class="form-group">
-                <label data-key="labelTheme">Site Theme</label>
-                <select id="themeChoice">
-                    <option value="silver" data-key="themeSilver">Navy & Silver Pro</option>
-                    <option value="chesscom" data-key="themeChesscom">Classic</option>
-                </select>
-            </div>
             
             <button id="createBtn" class="btn" data-key="btnEnter">Enter Room</button>
         </div>
@@ -68,15 +59,17 @@
             <div class="board-wrapper">
                 <div id="waitingOverlay" class="status-overlay" style="display: none;">
                     <div class="spinner"></div>
-                    <span data-key="msgWaiting">Waiting for opponent...</span>
+                    <span data-key="msgWaiting" style="font-size: 1.5rem; text-align: center; margin-bottom: 20px;">Waiting for opponent...</span>
+                    <!-- زر إلغاء المباراة قبل دخول الخصم -->
+                    <button id="cancelMatchBtn" class="btn btn-danger" style="width: 80%; font-size: 1.2rem;" data-key="btnCancel">Cancel Match</button>
                 </div>
                 <div id="countdownOverlay" class="status-overlay" style="display: none;">3</div>
                 
-                <div id="rematchOfferOverlay" class="status-overlay" style="display: none;">
-                    <span data-key="msgRematchOffer" style="font-size:1.5rem; margin-bottom:15px; text-align:center;">Opponent offered a rematch!</span>
+                <div id="interactiveOverlay" class="status-overlay" style="display: none;">
+                    <span id="interactiveMsg" style="font-size:1.5rem; margin-bottom:15px; text-align:center;">Action requested!</span>
                     <div style="display:flex; gap:15px; width: 80%;">
-                        <button id="acceptRematchBtn" class="btn" data-key="btnAccept">Accept</button>
-                        <button id="declineRematchBtn" class="btn btn-danger" data-key="btnDecline">Decline</button>
+                        <button id="acceptActionBtn" class="btn" data-key="btnAccept">Accept</button>
+                        <button id="declineActionBtn" class="btn btn-danger" data-key="btnDecline">Decline</button>
                     </div>
                 </div>
 
@@ -92,6 +85,7 @@
             
             <div style="display: flex; gap: 10px; margin-top: 12px;">
                 <button id="resignBtn" class="btn btn-danger" style="margin-top: 0;" data-key="btnResign">Resign</button>
+                <button id="drawOfferBtn" class="btn" style="margin-top: 0; background-color: var(--gold-dark);" data-key="btnDraw">Offer Draw</button>
                 <button id="copyPgnBtn" class="btn btn-secondary" style="margin-top: 0;" data-key="btnCopy">Copy PGN</button>
             </div>
 
