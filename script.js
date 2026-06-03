@@ -267,15 +267,23 @@ $(document).ready(function() {
     });
     function fallbackCopy(text) { var textArea = document.createElement("textarea"); textArea.value = text; document.body.appendChild(textArea); textArea.select(); try { document.execCommand('copy'); } catch(e){} document.body.removeChild(textArea); }
 
-    function handleGameEndScenarios() {
-        let winnerColor = null; let reason = '';
+        function handleGameEndScenarios() {
+        // إضافة شرط: لا ننهي اللعبة إلا إذا كانت قد بدأت فعلياً وتجاوزنا النقلات الافتتاحية
+        if (!gameStarted) return; 
+
         if (game.in_checkmate()) {
             if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]); 
-            winnerColor = game.turn() === 'w' ? 'b' : 'w';
-            reason = translations[currentLang].rsnCheckmate;
-        } else if (game.in_draw() || game.in_stalemate()) {
-            reason = translations[currentLang].rsnStalemate;
+            let winnerColor = game.turn() === 'w' ? 'b' : 'w';
+            let winnerText = winnerColor === 'b' ? (currentLang === 'ar' ? 'الأسود' : 'Black') : (currentLang === 'ar' ? 'الأبيض' : 'White');
+            endGame(translations[currentLang].msgCheckmateWin + winnerText, winnerColor);
+        } else if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
+            // إضافة شرط لعدم اعتبار المباراة تعادلاً إلا في حالات معينة
+            if (game.history().length > 5) {
+                endGame(translations[currentLang].msgDraw, null);
+            }
         }
+    }
+
         showEndGameModal(winnerColor, reason);
     }
 
