@@ -13,7 +13,7 @@ $(document).ready(function() {
     var game = new Chess(), board = null;
     var whiteSeconds = 0, blackSeconds = 0, incrementSeconds = 0;
     var timerInterval = null, selectedSquare = null, gameStarted = false;
-    var premove = null; 
+    var premove = null, isWaiting = false; 
     var currentRoomId = null, myPlayerColor = 'white', activeRoomRef = null;
 
     const sfx = {
@@ -24,12 +24,11 @@ $(document).ready(function() {
     };
 
     var currentLang = localStorage.getItem('chessLang') || 'en';
-    var currentTheme = localStorage.getItem('chessTheme') || 'modern';
+    var currentTheme = localStorage.getItem('chessTheme') || 'royal';
 
-    // تمت إزالة الإيموجي بالكامل وجعل النصوص احترافية
     var translations = {
-        ar: { lobbyTitle: "إعدادات المباراة", labelRoom: "رقم الغرفة", labelMinutes: "الوقت (دقائق)", labelIncrement: "الزيادة (ثواني)", labelColor: "اختر لونك", colorRandom: "عشوائي", colorWhite: "أبيض", colorBlack: "أسود", labelTheme: "المظهر", themeModern: "داكن حديث", themeChesscom: "فاتح كلاسيكي", btnEnter: "دخول الغرفة", playerOpponent: "الخصم", playerYou: "أنت", btnResign: "انسحاب", btnCopy: "نسخ PGN", btnDraw: "تعادل", btnCancel: "إلغاء المباراة", btnRematch: "إعادة التحدي", btnHome: "الرئيسية", msgCountdownStart: "ابدأ!", msgWaiting: "بانتظار الخصم...", msgRematchOffer: "الخصم يطلب إعادة التحدي", msgDrawOffer: "الخصم يعرض التعادل", btnAccept: "موافق", btnDecline: "رفض", msgCopySuccess: "تم النسخ", labelMoves: "نقلة", titleWin: "انتصار", titleLoss: "هزيمة", titleDraw: "تعادل", rsnCheckmate: "بكش مات", rsnResign: "بالانسحاب", rsnTimeout: "بانتهاء الوقت", rsnStalemate: "وضعية خنق", rsnAgreed: "بالاتفاق" },
-        en: { lobbyTitle: "Match Setup", labelRoom: "Room ID", labelMinutes: "Minutes", labelIncrement: "Increment", labelColor: "Your Color", colorRandom: "Random", colorWhite: "White", colorBlack: "Black", labelTheme: "Theme", themeModern: "Modern Dark", themeChesscom: "Classic Light", btnEnter: "Enter Room", playerOpponent: "Opponent", playerYou: "You", btnResign: "Resign", btnCopy: "Copy PGN", btnDraw: "Draw", btnCancel: "Cancel Match", btnRematch: "Rematch", btnHome: "Main Menu", msgCountdownStart: "Start!", msgWaiting: "Waiting for opponent...", msgRematchOffer: "Opponent offered a rematch", msgDrawOffer: "Opponent offered a draw", btnAccept: "Accept", btnDecline: "Decline", msgCopySuccess: "Copied", labelMoves: "Moves", titleWin: "Victory", titleLoss: "Defeat", titleDraw: "Draw", rsnCheckmate: "by Checkmate", rsnResign: "by Resignation", rsnTimeout: "by Timeout", rsnStalemate: "by Stalemate", rsnAgreed: "by Agreement" }
+        ar: { lobbyTitle: "إعدادات المباراة", labelRoom: "رقم الغرفة", labelMinutes: "الوقت (دقائق)", labelIncrement: "الزيادة (ثواني)", labelColor: "اختر لونك", colorRandom: "عشوائي", colorWhite: "أبيض", colorBlack: "أسود", labelTheme: "المظهر", themeRoyal: "ملكي وفضي", themeModern: "داكن حديث", themeChesscom: "فاتح كلاسيكي", btnEnter: "دخول الغرفة", playerOpponent: "الخصم", playerYou: "أنت", btnResign: "انسحاب", btnCopy: "نسخ PGN", btnDraw: "طلب تعادل", btnCancel: "إلغاء المباراة", btnRematch: "إعادة التحدي", btnHome: "الرئيسية", msgCountdownStart: "ابدأ!", msgWaiting: "بانتظار الخصم...", msgRematchOffer: "الخصم يطلب إعادة التحدي", msgDrawOffer: "الخصم يعرض التعادل", btnAccept: "موافق", btnDecline: "رفض", msgCopySuccess: "تم النسخ", labelMoves: "نقلة", titleWin: "انتصار", titleLoss: "هزيمة", titleDraw: "تعادل", rsnCheckmate: "بكش مات", rsnResign: "بالانسحاب", rsnTimeout: "بانتهاء الوقت", rsnStalemate: "وضعية خنق", rsnAgreed: "بالاتفاق" },
+        en: { lobbyTitle: "Match Setup", labelRoom: "Room ID", labelMinutes: "Minutes", labelIncrement: "Increment", labelColor: "Your Color", colorRandom: "Random", colorWhite: "White", colorBlack: "Black", labelTheme: "Theme", themeRoyal: "Royal Navy & Gold", themeModern: "Modern Dark", themeChesscom: "Classic Light", btnEnter: "Enter Room", playerOpponent: "Opponent", playerYou: "You", btnResign: "Resign", btnCopy: "Copy PGN", btnDraw: "Offer Draw", btnCancel: "Cancel Match", btnRematch: "Rematch", btnHome: "Main Menu", msgCountdownStart: "Start!", msgWaiting: "Waiting for opponent...", msgRematchOffer: "Opponent offered a rematch", msgDrawOffer: "Opponent offered a draw", btnAccept: "Accept", btnDecline: "Decline", msgCopySuccess: "Copied", labelMoves: "Moves", titleWin: "Victory", titleLoss: "Defeat", titleDraw: "Draw", rsnCheckmate: "by Checkmate", rsnResign: "by Resignation", rsnTimeout: "by Timeout", rsnStalemate: "by Stalemate", rsnAgreed: "by Agreement" }
     };
 
     function applyLanguage(lang) {
@@ -44,7 +43,7 @@ $(document).ready(function() {
     }
 
     function applyTheme(theme) { 
-        $('body').removeClass('theme-modern theme-chesscom').addClass('theme-' + theme); 
+        $('body').removeClass('theme-modern theme-chesscom theme-royal').addClass('theme-' + theme); 
         localStorage.setItem('chessTheme', theme); 
         $('#themeChoice').val(theme); 
     }
@@ -89,7 +88,6 @@ $(document).ready(function() {
     
     function stopTimer() { if(timerInterval) clearInterval(timerInterval); $('.timer').removeClass('active'); }
 
-    // استخدام fadeOut يضمن اختفاء زر الإلغاء بشكل كامل
     function runCountdown() {
         $('#waitingOverlay').fadeOut(200); 
         $('#interactiveOverlay').fadeOut(200);
@@ -129,6 +127,7 @@ $(document).ready(function() {
                 myPlayerColor = savedRole;
                 game.load_pgn(data.pgn || '');
                 whiteSeconds = data.whiteSeconds; blackSeconds = data.blackSeconds; incrementSeconds = data.increment;
+                isWaiting = false;
             } else if (!snapshot.exists() || (data && data.status !== 'waiting' && data.status !== 'playing')) {
                 isCreator = true;
                 let colorsArr = ['white', 'black'];
@@ -142,36 +141,43 @@ $(document).ready(function() {
                     creatorColor: myPlayerColor, playersCount: 1, status: 'waiting', action: 'none'
                 });
                 localStorage.setItem('chess_role_' + currentRoomId, myPlayerColor); 
+                isWaiting = true;
             } else if (data.playersCount === 1) {
                 myPlayerColor = data.creatorColor === 'white' ? 'black' : 'white'; 
                 game.load_pgn(data.pgn || '');
                 whiteSeconds = data.whiteSeconds; blackSeconds = data.blackSeconds; incrementSeconds = data.increment;
                 activeRoomRef.update({ playersCount: 2, status: 'playing' });
                 localStorage.setItem('chess_role_' + currentRoomId, myPlayerColor); 
+                isWaiting = false;
             } else {
                 alert(currentLang === 'ar' ? "الغرفة ممتلئة!" : "Room is full!"); 
                 $('#createBtn').prop('disabled', false); return;
             }
 
-            $('#lobby').hide(); $('#endGameModal').hide(); $('#gameArea').show(); 
+            $('#lobby').hide(); $('#endGameModal').hide(); $('#gameArea').fadeIn(300); 
             
             if (!board) {
                 var config = { draggable: true, position: 'start', onDragStart: onDragStart, onDrop: onDrop, onSnapEnd: onSnapEnd, moveSpeed: 100, snapbackSpeed: 100, pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png' };
                 board = Chessboard('board', config); 
+                $(window).resize(board.resize);
             }
             
-            board.resize(); board.orientation(myPlayerColor); board.position(game.fen(), false);
+            board.orientation(myPlayerColor); board.position(game.fen(), false);
             $('#movesHistory').text(game.pgn()); clearHighlights(); cancelPremove();
             updateTimersDisplay(); $('#resignBtn').show(); $('#drawOfferBtn').show(); $('.timer').removeClass('active');
             gameStarted = false; 
             
-            if (isCreator) { $('#waitingOverlay').fadeIn(200); } else if (data && data.status !== 'playing') { runCountdown(); }
+            if (isWaiting) { $('#waitingOverlay').fadeIn(200); } else if (data && data.status !== 'playing') { runCountdown(); }
 
-            // الاتصال بالسيرفر مع منع اللوب
+            // الاتصال بالسيرفر
             activeRoomRef.on('value', function(snap) {
                 let d = snap.val(); if (!d) return;
 
-                if (d.status === 'waiting' && d.playersCount === 2 && !gameStarted) { runCountdown(); }
+                // إصلاح شاشة الانتظار: يتم مسح الانتظار وبدء العد فوراً عندما يصبح اللاعبون 2
+                if (isWaiting && d.playersCount === 2 && d.status === 'playing') {
+                    isWaiting = false; 
+                    runCountdown();
+                }
 
                 if (d.action && d.action.type && d.action.by !== myPlayerColor) {
                     if (d.action.state === 'offered') {
@@ -187,8 +193,8 @@ $(document).ready(function() {
 
                 if (d.action && d.action.state === 'accepted') {
                     $('#interactiveOverlay').fadeOut(200);
-                    if (d.action.type === 'draw' && gameStarted) {
-                        handleServerGameEnd(null, translations[currentLang].rsnAgreed);
+                    if (d.action.type === 'draw') {
+                        activeRoomRef.update({ status: 'draw_agreed', action: null });
                     } else if (d.action.type === 'rematch') {
                         $('#endGameModal').fadeOut(200); game.reset(); board.position(game.fen());
                         whiteSeconds = d.whiteSeconds; blackSeconds = d.blackSeconds; incrementSeconds = d.increment;
@@ -214,11 +220,13 @@ $(document).ready(function() {
                     executePremove();
                 }
 
-                if (gameStarted) {
+                // إصلاح الاستسلام: الاستجابة الفورية من السيرفر بغض النظر عن حالة gameStarted
+                if (d.status === 'resigned_w' || d.status === 'resigned_b' || d.status === 'timeout_w' || d.status === 'timeout_b' || d.status === 'draw_agreed') {
                     if (d.status === 'resigned_w') { handleServerGameEnd('b', translations[currentLang].rsnResign); } 
                     else if (d.status === 'resigned_b') { handleServerGameEnd('w', translations[currentLang].rsnResign); } 
                     else if (d.status === 'timeout_w') { handleServerGameEnd('b', translations[currentLang].rsnTimeout); } 
                     else if (d.status === 'timeout_b') { handleServerGameEnd('w', translations[currentLang].rsnTimeout); }
+                    else if (d.status === 'draw_agreed') { handleServerGameEnd(null, translations[currentLang].rsnAgreed); }
                 }
             });
             $('#createBtn').prop('disabled', false); 
@@ -281,9 +289,13 @@ $(document).ready(function() {
         if (!gameStarted) return; 
         if (game.in_checkmate()) {
             let winnerColor = game.turn() === 'w' ? 'b' : 'w';
+            activeRoomRef.update({ status: winnerColor === 'w' ? 'checkmate_w' : 'checkmate_b' });
             handleServerGameEnd(winnerColor, translations[currentLang].rsnCheckmate);
         } else if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
-            if (game.history().length > 4) { handleServerGameEnd(null, translations[currentLang].rsnStalemate); }
+            if (game.history().length > 4) { 
+                activeRoomRef.update({ status: 'draw_auto' });
+                handleServerGameEnd(null, translations[currentLang].rsnStalemate); 
+            }
         }
     }
 
