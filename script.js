@@ -24,6 +24,9 @@ $(document).ready(function() {
     var currentRoomId = null, myPlayerColor = 'white', activeRoomRef = null;
     var isGameEndHandled = false; 
 
+    // ✅ إضافة قفل زمني لمنع النقرة الوهمية بعد الإفلات
+    var premoveLockout = false;
+
     auth.signInAnonymously().catch(e => console.error("Auth:", e));
     auth.onAuthStateChanged(user => { 
         if (user) { 
@@ -311,8 +314,13 @@ $(document).ready(function() {
                 isWaiting = (data.status === 'waiting');
                 setupPresence();
             } else if (!snapshot.exists() || (data && data.status !== 'waiting' && data.status !== 'playing')) {
-                let colorsArr = ['white', 'black']; let selectedColor = $('#colorChoice').val();
-                myPlayerColor = selectedColor === 'random' ? colorsArr[Math.floor(Math.random() * colorsArr.length)] : selectedColor;
+                // ✅ تعديل اختيار اللون العشوائي إلى 50-50 حقيقي
+                let selectedColor = $('#colorChoice').val();
+                if (selectedColor === 'random') {
+                    myPlayerColor = Math.random() < 0.5 ? 'white' : 'black';
+                } else {
+                    myPlayerColor = selectedColor;
+                }
                 game.reset(); whiteSeconds = minutes * 60; blackSeconds = minutes * 60;
                 await activeRoomRef.set({
                     fen: game.fen(), pgn: game.pgn(), lastMove: null,
@@ -565,8 +573,11 @@ $(document).ready(function() {
         setTimeout(() => { $('#endGameModal').fadeIn(300); }, 300); 
     }
 
-    // ===== أحداث التفاعل =====
+    // ===== أحداث التفاعل (مع تعديلات النقرة الوهمية) =====
     $(document).on('click', '#board .square-55d63', function() {
+        // ✅ تجاهل النقرة إذا كان القفل الزمني مفعّلاً (بعد الإفلات)
+        if (premoveLockout) return;
+
         if (!gameStarted || game.game_over()) return;
         var square = $(this).attr('data-square'); 
         var myColorCode = myPlayerColor.charAt(0);
@@ -618,6 +629,10 @@ $(document).ready(function() {
     }
     
     function onDrop (source, target) { 
+        // ✅ تفعيل القفل الزمني بعد الإفلات لمنع النقرة الوهمية
+        premoveLockout = true;
+        setTimeout(() => { premoveLockout = false; }, 300);
+
         if (source === target) {
             clearHighlights();
             selectedSquare = null;
