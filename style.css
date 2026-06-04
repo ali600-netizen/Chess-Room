@@ -41,7 +41,9 @@ input[type="number"] { border-bottom: 2px solid var(--border-color); border-radi
 .presence-online { background-color: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.4); }
 .presence-offline { background-color: #64748b; }
 
-.disconnect-banner { position: absolute; top: 15px; left: 15px; right: 15px; background: rgba(239, 68, 68, 0.95); color: white; padding: 12px; border-radius: 8px; text-align: center; font-weight: 800; z-index: 50; backdrop-filter: blur(4px); box-shadow: 0 5px 15px rgba(0,0,0,0.4); display: none; }
+/* تم تثبيت الشريط برمجياً لتجنب الاهتزاز مع الأرقام */
+.disconnect-banner { position: absolute; top: 15px; left: 15px; right: 15px; background: rgba(239, 68, 68, 0.95); color: white; padding: 12px; border-radius: 8px; text-align: center; font-weight: 800; z-index: 50; backdrop-filter: blur(4px); box-shadow: 0 5px 15px rgba(0,0,0,0.4); display: none; direction: ltr; font-family: 'Inter', sans-serif; }
+.disconnect-banner .sec { display: inline-block; min-width: 25px; text-align: right; }
 
 .captured-pieces { display: flex; align-items: center; min-height: 18px; gap: 1px; margin-top: 2px;}
 .captured-piece { width: 16px; height: 16px; background-size: cover; background-position: center; }
