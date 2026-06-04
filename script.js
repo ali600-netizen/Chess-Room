@@ -47,10 +47,9 @@ $(document).ready(function() {
         en: { lobbyTitle: "Match Setup", labelRoom: "Room ID", labelMinutes: "Minutes", labelIncrement: "Increment", labelColor: "Your Color", colorRandom: "Random", colorWhite: "White", colorBlack: "Black", labelTheme: "Theme", themeRoyal: "Royal Navy & Gold", themeModern: "Modern Dark", themeChesscom: "Classic Light", btnEnter: "Enter Room", playerOpponent: "Opponent", playerYou: "You", btnResign: "Resign", btnCopy: "Copy PGN", btnDraw: "Offer Draw", btnCancel: "Cancel Match", btnRematch: "Rematch", btnHome: "Main Menu", msgCountdownStart: "Start!", msgWaiting: "Waiting for opponent...", msgRematchOffer: "Opponent offered a rematch", msgDrawOffer: "Opponent offered a draw", btnAccept: "Accept", btnDecline: "Decline", msgCopySuccess: "Standard PGN Copied", labelMoves: "Moves", titleWinWhite: "White Won", titleWinBlack: "Black Won", titleDraw: "Draw", rsnCheckmate: "by Checkmate", rsnResign: "by Resignation", rsnTimeout: "by Timeout", rsnStalemate: "by Stalemate", rsnAgreed: "by Agreement", msgDisconnected: "Opponent missing... auto-resign in", rsnAbandoned: "by Abandonment" }
     };
 
-    // ===== دالة مساعدة لتحديث سجل النقلات بصيغة PGN كاملة بالرؤوس =====
+    // دالة PGN كاملة بالرؤوس
     function updateMovesHistory() {
         if (!game) return;
-        // نسخة مؤقتة من اللعبة لإضافة الرؤوس دون تعديل الأصل
         let pgnGame = new Chess();
         pgnGame.load_pgn(game.pgn());
         let d = new Date();
@@ -83,7 +82,6 @@ $(document).ready(function() {
             if(translations[lang][key]) { if($(this).is('option')) $(this).text(translations[lang][key]); else $(this).html(translations[lang][key]); }
         });
         if (!myUid) { $('#createBtn').text(lang === 'ar' ? 'جاري الاتصال...' : 'Connecting...'); }
-        // فقط إن كانت اللعبة نشطة
         if(board && $('#gameArea').is(':visible')) {
             setTimeout(function(){ if(board) board.resize(); }, 50);
         }
@@ -102,10 +100,6 @@ $(document).ready(function() {
 
     document.getElementById('board').addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
     $(document).on('contextmenu', '#board', function(e) { e.preventDefault(); cancelPremove(); });
-
-    function forceBoardUpdate() {
-        if (board) board.position(game.fen(), false);
-    }
 
     function formatTime(totalSeconds) { let m = Math.floor(totalSeconds / 60); let s = totalSeconds % 60; return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s; }
     
@@ -218,7 +212,7 @@ $(document).ready(function() {
         }
     }
 
-    // ===== إصلاح الـ Premove =====
+    // ===== دوال التظليل و Premove المصححة =====
     function cancelPremove() { 
         premove = null; 
         $('.square-55d63').removeClass('premove-highlight'); 
@@ -245,6 +239,13 @@ $(document).ready(function() {
         if (game.turn() !== myPlayerColor.charAt(0)) return false;
         if (game.game_over()) { cancelPremove(); return false; }
         
+        // التحقق من وجود قطعة صالحة في المربع المصدر
+        var piece = game.get(premove.from);
+        if (!piece || piece.color !== myPlayerColor.charAt(0)) {
+            cancelPremove();
+            return false;
+        }
+        
         let move = game.move({ from: premove.from, to: premove.to, promotion: 'q' }); 
         if (move) { 
             cancelPremove();
@@ -252,7 +253,6 @@ $(document).ready(function() {
             processLocalMove(move);
             return true;
         } else {
-            // الحركة غير قانونية الآن -> إلغاء الـ premove
             cancelPremove();
             return false;
         }
@@ -266,7 +266,6 @@ $(document).ready(function() {
         if (move.color === 'w') whiteSeconds += incrementSeconds; else blackSeconds += incrementSeconds;
         updateTimersDisplay(); updateActiveTimerStyle(); updateCapturedPieces();
         
-        // تحديث PGN وعرضه
         updateMovesHistory();
         
         activeRoomRef.update({ 
@@ -277,7 +276,6 @@ $(document).ready(function() {
             blackSeconds: blackSeconds 
         });
         
-        // إزالة أي تظليل متبقي
         clearHighlights();
         selectedSquare = null;
         highlightLastMove(move.from, move.to);
@@ -359,7 +357,7 @@ $(document).ready(function() {
         }
         
         board.orientation(myPlayerColor); board.position(game.fen(), false);
-        updateMovesHistory();  // عرض PGN من البداية
+        updateMovesHistory();
         clearHighlights(); cancelPremove(); updateCapturedPieces();
         updateTimersDisplay(); $('#resignBtn').show(); $('#drawOfferBtn').show(); $('.timer').removeClass('active');
         
@@ -406,9 +404,8 @@ $(document).ready(function() {
                 }
             }
 
-            // ===== استقبال حركة الخصم ومعالجة الـ premove =====
+            // استقبال حركة الخصم ومعالجة الـ premove
             if (d.lastMove && d.status === 'playing' && d.fen !== game.fen()) {
-                // تحديث حالة اللعبة من الخادم
                 if (d.pgn) {
                     game.load_pgn(d.pgn);
                 } else {
@@ -417,20 +414,19 @@ $(document).ready(function() {
                 
                 board.position(d.fen, false);
                 highlightLastMove(d.lastMove.from, d.lastMove.to);
-                updateMovesHistory();  // تحديث السجل
+                updateMovesHistory();
                 updateCapturedPieces(); 
                 updateActiveTimerStyle();
                 
-                // إزالة أي تظليل قديم
                 clearHighlights();
                 selectedSquare = null;
                 
                 let isMyTurn = (game.turn() === myPlayerColor.charAt(0));
                 if(board) board.draggable(gameStarted && isMyTurn);
                 
-                // تنفيذ الـ premove إذا كان دورنا
                 if (isMyTurn && gameStarted && !game.game_over()) {
-                    executePremove();
+                    // تأخير بسيط لضمان اكتمال تحديث الرقعة
+                    setTimeout(function() { executePremove(); }, 20);
                 } else {
                     cancelPremove();
                 }
@@ -572,11 +568,9 @@ $(document).ready(function() {
         var square = $(this).attr('data-square'); 
         var myColorCode = myPlayerColor.charAt(0);
         
-        // إذا كان هناك premove مخزن، نلغيه لأن المستخدم بدأ تفاعلاً جديداً
         if (premove) cancelPremove();
         
         if (selectedSquare) {
-            // محاولة تنفيذ حركة عادية إذا كان الدور لي
             if (game.turn() === myColorCode) {
                 var move = game.move({ from: selectedSquare, to: square, promotion: 'q' }); 
                 if (move) { 
@@ -585,7 +579,6 @@ $(document).ready(function() {
                     return; 
                 }
             } else {
-                // الدور ليس لي -> نخزن الحركة كـ premove
                 premove = { from: selectedSquare, to: square };
                 clearHighlights(); 
                 $('.square-' + selectedSquare).addClass('premove-highlight'); 
@@ -593,13 +586,11 @@ $(document).ready(function() {
                 selectedSquare = null;
                 return;
             }
-            // إذا وصلنا هنا فالحركة غير قانونية
             cancelPremove(); 
             clearHighlights(); 
             selectedSquare = null;
         }
         
-        // اختيار قطعة جديدة
         var piece = game.get(square); 
         if (piece && piece.color === myColorCode) { 
             selectedSquare = square; 
@@ -615,7 +606,6 @@ $(document).ready(function() {
         if (!gameStarted || game.game_over()) return false; 
         var myColorCode = myPlayerColor.charAt(0); 
         if (pieceStr.charAt(0) !== myColorCode) return false;
-        // إلغاء أي premove أو تظليل سابق
         cancelPremove();
         clearHighlights();
         selectedSquare = source; 
@@ -630,12 +620,11 @@ $(document).ready(function() {
             return 'snapback';
         }
         if (game.turn() !== myPlayerColor.charAt(0)) {
-            // ليس دوري -> نخزن premove
-            premove = { from: source, to: target };
             clearHighlights();
+            selectedSquare = null;
+            premove = { from: source, to: target };
             $('.square-' + source).addClass('premove-highlight');
             $('.square-' + target).addClass('premove-highlight');
-            selectedSquare = null;
             return 'snapback';
         }
 
