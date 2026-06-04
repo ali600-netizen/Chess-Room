@@ -84,3 +84,15 @@ body[dir="rtl"] .score-adv { margin-left: 0; margin-right: 5px; }
 .stat-value { display: block; font-size: 2.5rem; font-weight: 900; color: var(--primary-color); line-height: 1; margin-bottom: 5px; font-family: 'Inter', sans-serif;}
 .stat-label { font-size: 0.9rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;}
 .modal-actions { display: flex; flex-direction: column; gap: 12px; }
+.board-wrapper {
+    width: 100% !important;
+    max-width: 500px;
+    aspect-ratio: 1 / 1; /* يضمن بقاء الرقعة مربعة دائماً */
+    margin: 0 auto;
+}
+#board { width: 100% !important; }
+.logo-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; }
+.site-logo { width: 60px; height: 60px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.legal-move { background-image: radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%) !important; }
+.legal-move-capture { background-image: radial-gradient(circle, rgba(239, 68, 68, 0.4) 30%, transparent 30%) !important; }
+
