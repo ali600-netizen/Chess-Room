@@ -182,7 +182,6 @@ $(document).ready(function() {
         $(containerId).html(html);
     }
 
-    // --- النظام الجديد لإدارة التظليل المستقل ---
     function highlightLastMove(from, to) {
         $('#board .square-55d63').removeClass('highlight-last-move');
         if (from && to) {
@@ -316,7 +315,6 @@ $(document).ready(function() {
                 board.position(d.fen, false); 
                 forceBoardUpdate(); 
                 
-                // إضافة تظليل النقلة القادمة من السيرفر فوراً
                 highlightLastMove(d.lastMove.from, d.lastMove.to);
 
                 let isMyTurn = (game.turn() === myPlayerColor.charAt(0));
@@ -324,7 +322,6 @@ $(document).ready(function() {
                 
                 updateCapturedPieces(); updateActiveTimerStyle();
             } else if (d.lastMove && d.status === 'playing') {
-                // التأكد من استمرار التظليل حتى لو لم تتغير الـ FEN
                 highlightLastMove(d.lastMove.from, d.lastMove.to);
             }
 
@@ -418,13 +415,11 @@ $(document).ready(function() {
         if (myPresenceRef) myPresenceRef.onDisconnect().cancel();
     });
 
-    // --- النظام الشامل الجديد لمعايير الـ PGN العالمية ---
     $('#modalCopyPgnBtn, #copyPgnBtn').click(function() { 
-        // 1. إعداد الترويسة القياسية (Seven Tag Roster)
         let d = new Date();
         let dateStr = d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
         
-        game.header('Event', 'Move by Move Match'); // إضافة طابعك الخاص 
+        game.header('Event', 'Move by Move Match');
         game.header('Site', 'ChessRoom Server');
         game.header('Date', dateStr);
         game.header('Round', '1');
@@ -438,8 +433,7 @@ $(document).ready(function() {
         }
         game.header('Result', res);
 
-        // 2. سحب النص المنسق بالكامل
-        let pgnData = game.pgn({ max_width: 5, newline_char: '\n' }); 
+        let pgnData = game.pgn(); 
         if (!pgnData) return; 
         
         if (navigator.clipboard) { 
@@ -476,7 +470,6 @@ $(document).ready(function() {
 
     function cancelPremove() { premove = null; $('.square-55d63').removeClass('premove-highlight'); }
     
-    // تم الفصل: هذه الدالة تمسح النقاط الخضراء فقط، ولا تلمس تظليل آخر نقلة!
     function clearHighlights () { $('#board .square-55d63').removeClass('highlight legal-move legal-move-capture'); }
     
     function highlightLegalMoves(square) { 
@@ -494,15 +487,12 @@ $(document).ready(function() {
         if (move.color === 'w') whiteSeconds += incrementSeconds; else blackSeconds += incrementSeconds;
         updateTimersDisplay(); updateActiveTimerStyle(); updateCapturedPieces();
         
-        // إظهار الحركة في الواجهة (بدون الترويسة المعقدة للحفاظ على جمالية الصندوق)
         $('#movesHistory').text(game.pgn()); 
         var movesBox = document.getElementById("movesHistory"); movesBox.scrollTop = movesBox.scrollHeight;
         
         activeRoomRef.update({ fen: game.fen(), pgn: game.pgn(), lastMove: { from: move.from, to: move.to, promotion: move.promotion || '' }, whiteSeconds: whiteSeconds, blackSeconds: blackSeconds });
         
-        // تفعيل التظليل الثابت للحركة المحلية مباشرة
         highlightLastMove(move.from, move.to);
-        
         checkEndGameConditions();
     }
 
@@ -562,4 +552,3 @@ $(document).ready(function() {
     }
     function onSnapEnd () { board.position(game.fen()); }
 });
-
