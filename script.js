@@ -1,4 +1,4 @@
-    const firebaseConfig = {
+            const firebaseConfig = {
     apiKey: "AIzaSyCWL3DohN_BVmwlDjLYP_UohoKqnw4ylzU",
     authDomain: "chessroom-ca23f.firebaseapp.com",
     databaseURL: "https://chessroom-ca23f-default-rtdb.firebaseio.com/",
@@ -19,12 +19,17 @@ $(document).ready(function() {
     var whiteSeconds = 0, blackSeconds = 0, incrementSeconds = 0;
     var timerInterval = null, selectedSquare = null, gameStarted = false;
     var premove = null, isWaiting = false, isCountingDown = false; 
-    var abandonTimer = null, abandonSeconds = 30; // عداد الانقطاع
+    var abandonTimer = null, abandonSeconds = 30; 
     var currentRoomId = null, myPlayerColor = 'white', activeRoomRef = null;
     var isGameEndHandled = false; 
 
     auth.signInAnonymously().catch(e => console.error("Auth:", e));
-    auth.onAuthStateChanged(user => { if (user) { myUid = user.uid; } });
+    auth.onAuthStateChanged(user => { 
+        if (user) { 
+            myUid = user.uid; 
+            $('#createBtn').prop('disabled', false).text(translations[currentLang].btnEnter);
+        } 
+    });
 
     const sfx = {
         move: new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3'),
@@ -39,7 +44,7 @@ $(document).ready(function() {
 
     var translations = {
         ar: { lobbyTitle: "إعدادات المباراة", labelRoom: "رقم الغرفة", labelMinutes: "الوقت (دقائق)", labelIncrement: "الزيادة (ثواني)", labelColor: "اختر لونك", colorRandom: "عشوائي", colorWhite: "أبيض", colorBlack: "أسود", labelTheme: "المظهر", themeRoyal: "ملكي وفضي", themeModern: "داكن حديث", themeChesscom: "فاتح كلاسيكي", btnEnter: "دخول الغرفة", playerOpponent: "الخصم", playerYou: "أنت", btnResign: "انسحاب", btnCopy: "نسخ النقلات", btnDraw: "طلب تعادل", btnCancel: "إلغاء المباراة", btnRematch: "إعادة التحدي", btnHome: "القائمة الرئيسية", msgCountdownStart: "ابدأ!", msgWaiting: "بانتظار الخصم...", msgRematchOffer: "الخصم يطلب إعادة التحدي", msgDrawOffer: "الخصم يعرض التعادل", btnAccept: "موافق", btnDecline: "رفض", msgCopySuccess: "تم النسخ", labelMoves: "نقلة", titleWinWhite: "فاز الأبيض", titleWinBlack: "فاز الأسود", titleDraw: "النتيجة تعادل", rsnCheckmate: "بكش مات", rsnResign: "بالانسحاب", rsnTimeout: "لنفاد الوقت", rsnStalemate: "وضعية خنق", rsnAgreed: "بالاتفاق", msgDisconnected: "انقطع الخصم... استسلام بعد", rsnAbandoned: "لانسحاب الخصم (انقطاع)" },
-        en: { lobbyTitle: "Match Setup", labelRoom: "Room ID", labelMinutes: "Minutes", labelIncrement: "Increment", labelColor: "Your Color", colorRandom: "Random", colorWhite: "White", colorBlack: "Black", labelTheme: "Theme", themeRoyal: "Royal Navy & Gold", themeModern: "Modern Dark", themeChesscom: "Classic Light", btnEnter: "Enter Room", playerOpponent: "Opponent", playerYou: "You", btnResign: "Resign", btnCopy: "Copy PGN", btnDraw: "Offer Draw", btnCancel: "Cancel Match", btnRematch: "Rematch", btnHome: "Main Menu", msgCountdownStart: "Start!", msgWaiting: "Waiting for opponent...", msgRematchOffer: "Opponent offered a rematch", msgDrawOffer: "Opponent offered a draw", btnAccept: "Accept", btnDecline: "Decline", msgCopySuccess: "Copied", labelMoves: "Moves", titleWinWhite: "White Won", titleWinBlack: "Black Won", titleDraw: "Draw", rsnCheckmate: "by Checkmate", rsnResign: "by Resignation", rsnTimeout: "by Timeout", rsnStalemate: "by Stalemate", rsnAgreed: "by Agreement", msgDisconnected: "Opponent missing... auto-resign in", rsnAbandoned: "by Abandonment (Disconnected)" }
+        en: { lobbyTitle: "Match Setup", labelRoom: "Room ID", labelMinutes: "Minutes", labelIncrement: "Increment", labelColor: "Your Color", colorRandom: "Random", colorWhite: "White", colorBlack: "Black", labelTheme: "Theme", themeRoyal: "Royal Navy & Gold", themeModern: "Modern Dark", themeChesscom: "Classic Light", btnEnter: "Enter Room", playerOpponent: "Opponent", playerYou: "You", btnResign: "Resign", btnCopy: "Copy PGN", btnDraw: "Offer Draw", btnCancel: "Cancel Match", btnRematch: "Rematch", btnHome: "Main Menu", msgCountdownStart: "Start!", msgWaiting: "Waiting for opponent...", msgRematchOffer: "Opponent offered a rematch", msgDrawOffer: "Opponent offered a draw", btnAccept: "Accept", btnDecline: "Decline", msgCopySuccess: "Copied", labelMoves: "Moves", titleWinWhite: "White Won", titleWinBlack: "Black Won", titleDraw: "Draw", rsnCheckmate: "by Checkmate", rsnResign: "by Resignation", rsnTimeout: "by Timeout", rsnStalemate: "by Stalemate", rsnAgreed: "by Agreement", msgDisconnected: "Opponent missing... auto-resign in", rsnAbandoned: "by Abandonment" }
     };
 
     function applyLanguage(lang) {
@@ -64,13 +69,6 @@ $(document).ready(function() {
     $('#themeChoice').change(function() { applyTheme($(this).val()); });
 
     applyLanguage(currentLang); applyTheme(currentTheme);
-
-    auth.onAuthStateChanged(function(user) {
-        if (user) { 
-            myUid = user.uid; 
-            $('#createBtn').prop('disabled', false).text(translations[currentLang].btnEnter);
-        }
-    });
 
     document.getElementById('board').addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
     $(document).on('contextmenu', '#board', function(e) { e.preventDefault(); cancelPremove(); });
@@ -191,14 +189,9 @@ $(document).ready(function() {
         btn.prop('disabled', true).text(currentLang === 'ar' ? 'جاري الاتصال...' : 'Connecting...');
 
         if (!myUid) {
-            try {
-                let cred = await auth.signInAnonymously();
-                myUid = cred.user.uid;
-            } catch(e) {
-                alert("Auth failed.");
-                btn.prop('disabled', false).text(originalText);
-                return;
-            }
+            alert(currentLang === 'ar' ? "فشل الاتصال، انتظر ثانية وحاول مرة أخرى" : "Failed to connect, try again in a sec");
+            btn.prop('disabled', false).text(originalText);
+            return;
         }
         
         if (activeRoomRef) activeRoomRef.off();
@@ -210,16 +203,24 @@ $(document).ready(function() {
             let minutes = parseInt($('#timeMinutes').val()) || 3; 
             incrementSeconds = parseInt($('#timeIncrement').val()) || 0;
             
-            let savedRole = localStorage.getItem('chess_role_' + currentRoomId);
             isGameEndHandled = false; 
 
-            if (savedRole && data && data.status === 'playing') {
-                myPlayerColor = savedRole;
+            // تم حل مشكلة العودة للغرفة بمنطق يعتمد على الهوية UID بدلاً من LocalStorage
+            let isMySeatWhite = (data && data.whiteUid === myUid);
+            let isMySeatBlack = (data && data.blackUid === myUid);
+
+            if (data && (isMySeatWhite || isMySeatBlack)) {
+                // اللاعب يعود لغرفته السابقة!
+                myPlayerColor = isMySeatWhite ? 'white' : 'black';
                 game.load_pgn(data.pgn || '');
                 whiteSeconds = data.whiteSeconds; blackSeconds = data.blackSeconds; incrementSeconds = data.increment;
-                isWaiting = false;
+                
+                await activeRoomRef.update({ [myPlayerColor + 'Online']: true });
+                isWaiting = (data.status === 'waiting');
                 setupPresence();
+
             } else if (!snapshot.exists() || (data && data.status !== 'waiting' && data.status !== 'playing')) {
+                // إنشاء غرفة جديدة
                 let colorsArr = ['white', 'black'];
                 let selectedColor = $('#colorChoice').val();
                 myPlayerColor = selectedColor === 'random' ? colorsArr[Math.floor(Math.random() * colorsArr.length)] : selectedColor;
@@ -233,10 +234,11 @@ $(document).ready(function() {
                     [myPlayerColor + 'Uid']: myUid,
                     [myPlayerColor + 'Online']: true
                 });
-                localStorage.setItem('chess_role_' + currentRoomId, myPlayerColor); 
                 isWaiting = true;
                 setupPresence();
+
             } else if (data.playersCount === 1) {
+                // دخول كلاعب ثاني
                 myPlayerColor = data.creatorColor === 'white' ? 'black' : 'white'; 
                 game.load_pgn(data.pgn || '');
                 whiteSeconds = data.whiteSeconds; blackSeconds = data.blackSeconds; incrementSeconds = data.increment;
@@ -246,16 +248,17 @@ $(document).ready(function() {
                     [myPlayerColor + 'Uid']: myUid,
                     [myPlayerColor + 'Online']: true
                 });
-                localStorage.setItem('chess_role_' + currentRoomId, myPlayerColor); 
                 isWaiting = false;
                 setupPresence();
+
             } else {
-                alert(currentLang === 'ar' ? "الغرفة ممتلئة أو محمية!" : "Room is full!"); 
+                alert(currentLang === 'ar' ? "الغرفة ممتلئة ولا يمكنك الدخول!" : "Room is full and you are not a participant!"); 
                 btn.prop('disabled', false).text(originalText);
                 return;
             }
         } catch (error) {
-            alert(currentLang === 'ar' ? "الرجاء استخدام رقم غرفة جديد كلياً!" : "Please use a brand new Room ID!");
+            console.error(error);
+            alert(currentLang === 'ar' ? "يرجى مسح الغرف القديمة لتطبيق الحماية الجديدة!" : "Please delete old rooms for the new security to work!");
             btn.prop('disabled', false).text(originalText);
             return;
         }
@@ -277,14 +280,16 @@ $(document).ready(function() {
         $('#movesHistory').text(game.pgn()); clearHighlights(); cancelPremove(); updateCapturedPieces();
         updateTimersDisplay(); $('#resignBtn').show(); $('#drawOfferBtn').show(); $('.timer').removeClass('active');
         
+        // إصلاح اللعبة الميتة بعد العودة
         if (isWaiting) { 
             $('#waitingOverlay').fadeIn(200); 
+        } else if (game.history().length > 0 && !game.game_over()) {
+            gameStarted = true; updateActiveTimerStyle(); startTimer();
         }
 
         activeRoomRef.on('value', function(snap) {
             let d = snap.val(); if (!d) return;
 
-            // 1. نظام الانقطاع والعد التنازلي للانسحاب التلقائي (30 ثانية)
             if (d.playersCount === 2) {
                 let oppColor = myPlayerColor === 'white' ? 'black' : 'white';
                 let isOppOnline = d[oppColor + 'Online'];
@@ -294,12 +299,13 @@ $(document).ready(function() {
                     if (d.status === 'playing' && !game.game_over()) {
                         if (!abandonTimer) {
                             abandonSeconds = 30;
-                            $('#disconnectBanner').text(translations[currentLang].msgDisconnected + " " + abandonSeconds + "s").fadeIn(200);
+                            $('#abandonSec').text(abandonSeconds);
+                            $('#disconnectBanner').fadeIn(200);
                             abandonTimer = setInterval(() => {
                                 abandonSeconds--;
-                                $('#disconnectBanner').text(translations[currentLang].msgDisconnected + " " + abandonSeconds + "s");
+                                $('#abandonSec').text(abandonSeconds); // تغيير الرقم فقط بدون اهتزاز الشريط
                                 if (abandonSeconds <= 0) {
-                                    clearInterval(abandonTimer);
+                                    clearInterval(abandonTimer); abandonTimer = null;
                                     let abandonStatus = myPlayerColor === 'white' ? 'abandoned_b' : 'abandoned_w';
                                     activeRoomRef.update({ status: abandonStatus });
                                 }
@@ -313,17 +319,8 @@ $(document).ready(function() {
                 }
             }
 
-            // 2. نظام التزامن وبدء اللعبة
-            if (d.status === 'playing' && !gameStarted) {
-                $('#waitingOverlay').fadeOut(200);
-                if (game.history().length > 0) {
-                    // العودة لغرفة شغالة
-                    gameStarted = true; updateActiveTimerStyle(); startTimer();
-                } else if (!isCountingDown) {
-                    // بداية لعبة جديدة
-                    isCountingDown = true;
-                    runCountdown();
-                }
+            if (isWaiting && d.playersCount === 2 && d.status === 'playing') {
+                isWaiting = false; runCountdown();
             }
 
             if (d.action && d.action.type && d.action.by !== myPlayerColor) {
@@ -341,19 +338,26 @@ $(document).ready(function() {
                 }
             }
 
+            // إصلاح التزامن في الريماتش
             if (d.action && d.action.state === 'accepted') {
                 $('#interactiveOverlay').fadeOut(200);
                 if (d.action.type === 'draw') {
                     activeRoomRef.update({ status: 'draw_agreed', action: null });
                 } else if (d.action.type === 'rematch') {
                     isGameEndHandled = false; 
+                    if (abandonTimer) { clearInterval(abandonTimer); abandonTimer = null; }
                     $('#endGameModal').fadeOut(200); $('#disconnectBanner').hide(); game.reset(); board.position(game.fen());
                     whiteSeconds = d.whiteSeconds; blackSeconds = d.blackSeconds; incrementSeconds = d.increment;
                     $('#movesHistory').text(''); clearHighlights(); cancelPremove(); updateCapturedPieces();
                     $('#resignBtn').show(); $('#drawOfferBtn').show(); $('.timer').removeClass('active');
                     gameStarted = false; isCountingDown = false;
+                    runCountdown();
                 }
-                if (d.action.by !== myPlayerColor) { activeRoomRef.update({ action: null }); } 
+                
+                // مسح الأكشن مع تأخير طفيف لضمان وصوله للطرفين
+                if (d.action.by !== myPlayerColor && d.action.type === 'rematch') { 
+                    setTimeout(() => activeRoomRef.update({ action: null }), 2000); 
+                } 
             }
 
             if (d.lastMove && d.status === 'playing' && d.fen !== game.fen()) {
@@ -378,7 +382,6 @@ $(document).ready(function() {
                 executePremove();
             }
 
-            // 3. نهايات اللعبة الشاملة
             if (d.status === 'resigned_w' || d.status === 'resigned_b' || d.status === 'timeout_w' || d.status === 'timeout_b' || d.status === 'draw_agreed' || d.status === 'checkmate_w' || d.status === 'checkmate_b' || d.status === 'draw_auto' || d.status === 'abandoned_w' || d.status === 'abandoned_b') {
                 
                 if (abandonTimer) { clearInterval(abandonTimer); abandonTimer = null; $('#disconnectBanner').fadeOut(); }
@@ -444,7 +447,6 @@ $(document).ready(function() {
 
     $('#modalHomeBtn').click(function() { 
         stopTimer(); $('#gameArea').hide(); $('#endGameModal').hide(); $('#disconnectBanner').hide(); $('#lobby').fadeIn(300); 
-        localStorage.removeItem('chess_role_' + currentRoomId); 
         if (activeRoomRef) activeRoomRef.off(); 
         if (myPresenceRef) myPresenceRef.onDisconnect().cancel();
     });
@@ -565,4 +567,3 @@ $(document).ready(function() {
     }
     function onSnapEnd () { board.position(game.fen()); }
 });
-            
