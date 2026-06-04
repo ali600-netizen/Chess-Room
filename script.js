@@ -468,10 +468,21 @@ $(document).ready(function() {
         if (myPresenceRef) myPresenceRef.onDisconnect().cancel();
     });
 
-    $('#modalCopyPgnBtn, #copyPgnBtn').click(function() { 
-        let pgnData = game.pgn(); if (!pgnData) return; 
-        if (navigator.clipboard) { navigator.clipboard.writeText(pgnData).then(()=>alert(translations[currentLang].msgCopySuccess)).catch(() => { fallbackCopy(pgnData); }); } else { fallbackCopy(pgnData); }
+        $('#modalCopyPgnBtn, #copyPgnBtn').click(function() { 
+        let pgnData = exportStandardPGN(); // استدعاء الدالة العالمية
+        if (!pgnData) return; 
+        
+        if (navigator.clipboard) { 
+            navigator.clipboard.writeText(pgnData).then(() => {
+                alert(translations[currentLang].msgCopySuccess);
+            }).catch(() => { 
+                fallbackCopy(pgnData); 
+            }); 
+        } else { 
+            fallbackCopy(pgnData); 
+        }
     });
+
     function fallbackCopy(text) { var textArea = document.createElement("textarea"); textArea.value = text; document.body.appendChild(textArea); textArea.select(); try { document.execCommand('copy'); alert(translations[currentLang].msgCopySuccess); } catch(e){} document.body.removeChild(textArea); }
 
     function checkEndGameConditions() {
@@ -503,7 +514,10 @@ $(document).ready(function() {
     }
 
     function cancelPremove() { premove = null; $('.square-55d63').removeClass('premove-highlight'); }
-    function clearHighlights () { $('#board .square-55d63').removeClass('highlight legal-move legal-move-capture'); }
+  function clearHighlights() { 
+    $('#board .square-55d63').removeClass('highlight legal-move legal-move-capture premove-highlight'); 
+}
+
     
     function highlightLegalMoves(square) { 
         clearHighlights(); var moves = game.moves({ square: square, verbose: true }); 
@@ -532,45 +546,61 @@ $(document).ready(function() {
             if (move) { board.position(game.fen()); processLocalMove(move); } 
         } else { cancelPremove(); }
     }
-
     $(document).on('click', '#board .square-55d63', function() {
         if (!gameStarted || game.game_over()) return;
-        var square = $(this).attr('data-square'); var myColorCode = myPlayerColor.charAt(0);
+        var square = $(this).attr('data-square'); 
+        var myColorCode = myPlayerColor.charAt(0);
         
         if (premove) { cancelPremove(); }
         
         if (selectedSquare) {
             if (game.turn() === myColorCode) {
                 var move = game.move({ from: selectedSquare, to: square, promotion: 'q' }); 
-                if (move) { board.position(game.fen()); clearHighlights(); selectedSquare = null; processLocalMove(move); return; }
+                if (move) { 
+                    clearHighlights(); // مسح فوري
+                    selectedSquare = null; 
+                    board.position(game.fen()); 
+                    processLocalMove(move); 
+                    return; 
+                }
             } else {
                 cancelPremove();
                 premove = { from: selectedSquare, to: square };
-                clearHighlights(); $('.square-' + selectedSquare).addClass('premove-highlight'); $('.square-' + square).addClass('premove-highlight');
-                selectedSquare = null; return;
+                clearHighlights(); 
+                $('.square-' + selectedSquare).addClass('premove-highlight'); 
+                $('.square-' + square).addClass('premove-highlight');
+                selectedSquare = null; 
+                return;
             }
-            cancelPremove(); clearHighlights(); selectedSquare = null;
+            clearHighlights(); // مسح فوري إذا كانت النقلة خاطئة
+            selectedSquare = null;
         }
         
         var piece = game.get(square); 
         if (piece && piece.color === myColorCode) { 
+            clearHighlights(); // تنظيف الرقعة قبل تحديد قطعة جديدة
             selectedSquare = square; 
             if (game.turn() === myColorCode) highlightLegalMoves(square); 
-        } else { cancelPremove(); clearHighlights(); selectedSquare = null; }
+        } else { 
+            clearHighlights(); 
+            selectedSquare = null; 
+        }
     });
 
     function onDragStart (source, pieceStr) { 
         if (!gameStarted || game.game_over()) return false; 
         var myColorCode = myPlayerColor.charAt(0); 
         if (pieceStr.charAt(0) !== myColorCode) return false; 
+        
+        clearHighlights(); // تنظيف فوري عند بدء السحب
         selectedSquare = source; 
         if(game.turn() === myColorCode) highlightLegalMoves(source); 
         return true; 
     }
     
     function onDrop (source, target) { 
+        clearHighlights(); // مسح العلامات فور إفلات القطعة (ينهي التعليق)
         if (source === target) return 'snapback'; 
-        
         if (game.turn() !== myPlayerColor.charAt(0)) return 'snapback'; 
 
         var move = game.move({ from: source, to: target, promotion: 'q' }); 
@@ -580,5 +610,34 @@ $(document).ready(function() {
         processLocalMove(move); 
         return; 
     }
-    function onSnapEnd () { board.position(game.fen()); }
-});
+    
+    function onSnapEnd () { 
+        clearHighlights();
+        board.position(game.fen()); 
+    }
+    function exportStandardPGN() {
+        // إنشاء تاريخ اليوم بالصيغة العالمية
+        let d = new Date();
+        let dateStr = d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
+        
+        // إعداد الترويسة القياسية للمحركات
+        game.header('Event', 'Move by Match');
+        game.header('Site', 'Chess Room');
+        game.header('Date', dateStr);
+        game.header('White', 'Player 1');
+        game.header('Black', 'Player 2');
+        
+        // تحديد النتيجة
+        let result = '*';
+        if (game.game_over()) {
+            if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
+                result = '1/2-1/2';
+            } else {
+                result = game.turn() === 'w' ? '0-1' : '1-0';
+            }
+        }
+        game.header('Result', result);
+        
+        // تصدير PGN قياسي نظيف يدعمه Stockfish و Lichess
+        return game.pgn({ max_width: 65, newline_char: '\n' });
+    }
