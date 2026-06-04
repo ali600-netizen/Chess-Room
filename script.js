@@ -212,7 +212,7 @@ $(document).ready(function() {
         }
     }
 
-    // ======= دوال Premove المبسطة =======
+    // ======= دوال Premove المبسطة والمعدلة =======
     function cancelPremove() { 
         if (premove) console.log("❌ Premove cancelled");
         premove = null; 
@@ -235,23 +235,15 @@ $(document).ready(function() {
         } 
     }
 
-    // تنفيذ الـ premove بشكل فوري وصريح
+    // تنفيذ الـ premove مع التحقق من قانونية النقلة بعد التحديث
     function tryExecutePremove() {
         if (!premove) return false;
-        if (game.turn() !== myPlayerColor.charAt(0)) return false;
-        if (game.game_over()) { cancelPremove(); return false; }
-        
-        var piece = game.get(premove.from);
-        if (!piece || piece.color !== myPlayerColor.charAt(0)) {
-            console.log("Premove invalid, clearing");
-            cancelPremove();
-            return false;
-        }
         
         var move = game.move({ from: premove.from, to: premove.to, promotion: 'q' });
+        
         if (move) {
             console.log("✅ Premove executed successfully", move);
-            cancelPremove();  // مسح بعد التنفيذ
+            cancelPremove();
             board.position(game.fen(), false);
             processLocalMove(move);
             return true;
@@ -429,19 +421,22 @@ $(document).ready(function() {
                 let isMyTurn = (game.turn() === myPlayerColor.charAt(0));
                 if(board) board.draggable(gameStarted && isMyTurn);
                 
-                // تنفيذ الـ premove إذا كان لدينا واحد ودورنا
+                // تنفيذ الـ premove بتأخير شبه معدوم (50 ملي ثانية) لضمان نجاحه
                 if (isMyTurn && gameStarted && !game.game_over()) {
-                    console.log("📌 Opponent moved, my turn now. Attempting premove...");
-                    tryExecutePremove();  // استدعاء مباشر بدون تأخير
+                    if (premove) {
+                        console.log("📌 Opponent moved, attempting premove with micro-delay...");
+                        setTimeout(() => {
+                            tryExecutePremove();
+                        }, 50);
+                    }
                 } else {
-                    // إذا لم يكن دورنا، نبقي الـ premove محفوظاً للمستقبل
                     if (premove) console.log("⏳ Premove still stored, waiting for my turn");
                 }
             } else if (d.lastMove && d.status === 'playing') {
                 highlightLastMove(d.lastMove.from, d.lastMove.to);
             }
 
-            // باقي الكود (actions, game end) مختصراً لأنه لم يتغير
+            // معالجة الأفعال الجانبية (تعادل، إعادة)
             if (d.action && d.action.type && d.action.by !== myPlayerColor) {
                 if (d.action.state === 'offered') {
                     let msg = d.action.type === 'rematch' ? translations[currentLang].msgRematchOffer : translations[currentLang].msgDrawOffer;
@@ -615,7 +610,7 @@ $(document).ready(function() {
         if (!gameStarted || game.game_over()) return false; 
         var myColorCode = myPlayerColor.charAt(0); 
         if (pieceStr.charAt(0) !== myColorCode) return false;
-        cancelPremove();  // نلغي أي premove سابق لأن المستخدم بدأ سحباً جديداً
+        cancelPremove();  
         clearHighlights();
         selectedSquare = source; 
         if(game.turn() === myColorCode) highlightLegalMoves(source); 
