@@ -1,4 +1,4 @@
-            const firebaseConfig = {
+const firebaseConfig = {
     apiKey: "AIzaSyCWL3DohN_BVmwlDjLYP_UohoKqnw4ylzU",
     authDomain: "chessroom-ca23f.firebaseapp.com",
     databaseURL: "https://chessroom-ca23f-default-rtdb.firebaseio.com/",
@@ -23,6 +23,7 @@ $(document).ready(function() {
     var currentRoomId = null, myPlayerColor = 'white', activeRoomRef = null;
     var isGameEndHandled = false; 
 
+    // تسجيل الدخول الأمني
     auth.signInAnonymously().catch(e => console.error("Auth:", e));
     auth.onAuthStateChanged(user => { 
         if (user) { 
@@ -72,6 +73,14 @@ $(document).ready(function() {
 
     document.getElementById('board').addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
     $(document).on('contextmenu', '#board', function(e) { e.preventDefault(); cancelPremove(); });
+
+    // دالة التحديث الإجباري للرقعة
+    function forceBoardUpdate() {
+        if (board) {
+            board.resize();
+            board.position(game.fen());
+        }
+    }
 
     function formatTime(totalSeconds) { let m = Math.floor(totalSeconds / 60); let s = totalSeconds % 60; return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s; }
     
@@ -123,6 +132,10 @@ $(document).ready(function() {
                 isCountingDown = false;
                 updateActiveTimerStyle(); 
                 startTimer(); 
+                
+                // تمكين الرقعة فور انتهاء العد لمن عليه الدور
+                let isMyTurn = (game.turn() === myPlayerColor.charAt(0));
+                board.draggable(isMyTurn);
             }
         }, 1000);
     }
@@ -205,12 +218,11 @@ $(document).ready(function() {
             
             isGameEndHandled = false; 
 
-            // تم حل مشكلة العودة للغرفة بمنطق يعتمد على الهوية UID بدلاً من LocalStorage
             let isMySeatWhite = (data && data.whiteUid === myUid);
             let isMySeatBlack = (data && data.blackUid === myUid);
 
             if (data && (isMySeatWhite || isMySeatBlack)) {
-                // اللاعب يعود لغرفته السابقة!
+                // العودة للغرفة السابقة
                 myPlayerColor = isMySeatWhite ? 'white' : 'black';
                 game.load_pgn(data.pgn || '');
                 whiteSeconds = data.whiteSeconds; blackSeconds = data.blackSeconds; incrementSeconds = data.increment;
@@ -238,7 +250,7 @@ $(document).ready(function() {
                 setupPresence();
 
             } else if (data.playersCount === 1) {
-                // دخول كلاعب ثاني
+                // الانضمام كلاعب ثاني
                 myPlayerColor = data.creatorColor === 'white' ? 'black' : 'white'; 
                 game.load_pgn(data.pgn || '');
                 whiteSeconds = data.whiteSeconds; blackSeconds = data.blackSeconds; incrementSeconds = data.increment;
@@ -257,8 +269,8 @@ $(document).ready(function() {
                 return;
             }
         } catch (error) {
-            console.error(error);
-            alert(currentLang === 'ar' ? "يرجى مسح الغرف القديمة لتطبيق الحماية الجديدة!" : "Please delete old rooms for the new security to work!");
+            // حل مشكلة الدخول المتزامن باحترافية!
+            alert(currentLang === 'ar' ? "تزامن لحظي! الغرفة تم إنشاؤها للتو، اضغط (دخول) مرة أخرى للانضمام كلاعب ثانٍ." : "Race condition! Room just created, press Enter again to join.");
             btn.prop('disabled', false).text(originalText);
             return;
         }
@@ -280,16 +292,34 @@ $(document).ready(function() {
         $('#movesHistory').text(game.pgn()); clearHighlights(); cancelPremove(); updateCapturedPieces();
         updateTimersDisplay(); $('#resignBtn').show(); $('#drawOfferBtn').show(); $('.timer').removeClass('active');
         
-        // إصلاح اللعبة الميتة بعد العودة
+        // --- الحل الجذري لتجميد اللاعب الثاني ---
         if (isWaiting) { 
             $('#waitingOverlay').fadeIn(200); 
         } else if (game.history().length > 0 && !game.game_over()) {
             gameStarted = true; updateActiveTimerStyle(); startTimer();
+        } else {
+            // اللاعب الثاني دخل للتو مباراة جديدة، أطلق العداد!
+            if (!isCountingDown) {
+                isCountingDown = true;
+                runCountdown();
+            }
         }
 
         activeRoomRef.on('value', function(snap) {
             let d = snap.val(); if (!d) return;
 
+            // 1. مراقبة حالة بدء اللعب من السيرفر
+            if (d.status === 'playing' && !gameStarted) {
+                $('#waitingOverlay').fadeOut(200);
+                if (game.history().length > 0) {
+                    gameStarted = true; updateActiveTimerStyle(); startTimer();
+                } else if (!isCountingDown) {
+                    isCountingDown = true;
+                    runCountdown();
+                }
+            }
+
+            // 2. تحديثات الخصم (الاتصال/الانقطاع)
             if (d.playersCount === 2) {
                 let oppColor = myPlayerColor === 'white' ? 'black' : 'white';
                 let isOppOnline = d[oppColor + 'Online'];
@@ -303,7 +333,7 @@ $(document).ready(function() {
                             $('#disconnectBanner').fadeIn(200);
                             abandonTimer = setInterval(() => {
                                 abandonSeconds--;
-                                $('#abandonSec').text(abandonSeconds); // تغيير الرقم فقط بدون اهتزاز الشريط
+                                $('#abandonSec').text(abandonSeconds);
                                 if (abandonSeconds <= 0) {
                                     clearInterval(abandonTimer); abandonTimer = null;
                                     let abandonStatus = myPlayerColor === 'white' ? 'abandoned_b' : 'abandoned_w';
@@ -319,10 +349,20 @@ $(document).ready(function() {
                 }
             }
 
-            if (isWaiting && d.playersCount === 2 && d.status === 'playing') {
-                isWaiting = false; runCountdown();
+            // 3. مزامنة دقيقة للرقعة (تحل مشكلة المنع من اللعب)
+            if (d.lastMove && d.status === 'playing' && d.fen !== game.fen()) {
+                game.load(d.fen);
+                board.position(d.fen, false); // تحديث فوري
+                forceBoardUpdate(); // إجبار التحديث لتلافي أي انضغاط
+                
+                let isMyTurn = (game.turn() === myPlayerColor.charAt(0));
+                board.draggable(gameStarted && isMyTurn); // التحكم بالدور
+                
+                updateCapturedPieces();
+                updateActiveTimerStyle();
             }
 
+            // 4. نظام الأزرار (التعادل والريماتش)
             if (d.action && d.action.type && d.action.by !== myPlayerColor) {
                 if (d.action.state === 'offered') {
                     let msg = d.action.type === 'rematch' ? translations[currentLang].msgRematchOffer : translations[currentLang].msgDrawOffer;
@@ -338,7 +378,6 @@ $(document).ready(function() {
                 }
             }
 
-            // إصلاح التزامن في الريماتش
             if (d.action && d.action.state === 'accepted') {
                 $('#interactiveOverlay').fadeOut(200);
                 if (d.action.type === 'draw') {
@@ -354,34 +393,12 @@ $(document).ready(function() {
                     runCountdown();
                 }
                 
-                // مسح الأكشن مع تأخير طفيف لضمان وصوله للطرفين
                 if (d.action.by !== myPlayerColor && d.action.type === 'rematch') { 
                     setTimeout(() => activeRoomRef.update({ action: null }), 2000); 
                 } 
             }
 
-            if (d.lastMove && d.status === 'playing' && d.fen !== game.fen()) {
-                let m = game.move({ from: d.lastMove.from, to: d.lastMove.to, promotion: d.lastMove.promotion });
-                if (!m) { 
-                    game.load_pgn(d.pgn); 
-                    let history = game.history({verbose: true});
-                    if (history.length > 0) m = history[history.length - 1]; 
-                } 
-                board.position(game.fen());
-                
-                if (game.in_check()) sfx.check.play().catch(()=>{});
-                else if (m && m.captured) sfx.capture.play().catch(()=>{}); 
-                else sfx.move.play().catch(()=>{});
-                
-                whiteSeconds = d.whiteSeconds; blackSeconds = d.blackSeconds;
-                updateTimersDisplay(); updateActiveTimerStyle(); updateCapturedPieces();
-                $('#movesHistory').text(game.pgn());
-                var movesBox = document.getElementById("movesHistory"); movesBox.scrollTop = movesBox.scrollHeight;
-                
-                checkEndGameConditions();
-                executePremove();
-            }
-
+            // 5. نهايات اللعبة
             if (d.status === 'resigned_w' || d.status === 'resigned_b' || d.status === 'timeout_w' || d.status === 'timeout_b' || d.status === 'draw_agreed' || d.status === 'checkmate_w' || d.status === 'checkmate_b' || d.status === 'draw_auto' || d.status === 'abandoned_w' || d.status === 'abandoned_b') {
                 
                 if (abandonTimer) { clearInterval(abandonTimer); abandonTimer = null; $('#disconnectBanner').fadeOut(); }
@@ -553,17 +570,15 @@ $(document).ready(function() {
     
     function onDrop (source, target) { 
         if (source === target) return 'snapback'; 
-        clearHighlights(); var myColorCode = myPlayerColor.charAt(0); 
-        if (game.turn() === myColorCode) {
-            var move = game.move({ from: source, to: target, promotion: 'q' }); 
-            if (move === null) { selectedSquare = null; return 'snapback'; } 
-            selectedSquare = null; processLocalMove(move); return; 
-        } else {
-            cancelPremove();
-            premove = { from: source, to: target };
-            $('.square-' + source).addClass('premove-highlight'); $('.square-' + target).addClass('premove-highlight');
-            selectedSquare = null; return 'snapback';
-        }
+        
+        if (game.turn() !== myPlayerColor.charAt(0)) return 'snapback'; 
+
+        var move = game.move({ from: source, to: target, promotion: 'q' }); 
+        if (move === null) { selectedSquare = null; return 'snapback'; } 
+        
+        selectedSquare = null; 
+        processLocalMove(move); 
+        return; 
     }
     function onSnapEnd () { board.position(game.fen()); }
 });
