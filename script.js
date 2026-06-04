@@ -360,6 +360,11 @@ $(document).ready(function() {
                 
                 updateCapturedPieces();
                 updateActiveTimerStyle();
+
+                // تفعيل النقلات المسبقة (تمت إضافتها هنا)
+                if (isMyTurn && premove) {
+                    setTimeout(executePremove, 150); 
+                }
             }
 
             // 4. نظام الأزرار (التعادل والريماتش)
@@ -615,6 +620,7 @@ $(document).ready(function() {
         clearHighlights();
         board.position(game.fen()); 
     }
+    
     function exportStandardPGN() {
         // إنشاء تاريخ اليوم بالصيغة العالمية
         let d = new Date();
@@ -641,3 +647,5 @@ $(document).ready(function() {
         // تصدير PGN قياسي نظيف يدعمه Stockfish و Lichess
         return game.pgn({ max_width: 65, newline_char: '\n' });
     }
+
+}); // تم إصلاح الإغلاق هنا
