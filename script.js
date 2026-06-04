@@ -47,7 +47,6 @@ $(document).ready(function() {
         en: { lobbyTitle: "Match Setup", labelRoom: "Room ID", labelMinutes: "Minutes", labelIncrement: "Increment", labelColor: "Your Color", colorRandom: "Random", colorWhite: "White", colorBlack: "Black", labelTheme: "Theme", themeRoyal: "Royal Navy & Gold", themeModern: "Modern Dark", themeChesscom: "Classic Light", btnEnter: "Enter Room", playerOpponent: "Opponent", playerYou: "You", btnResign: "Resign", btnCopy: "Copy PGN", btnDraw: "Offer Draw", btnCancel: "Cancel Match", btnRematch: "Rematch", btnHome: "Main Menu", msgCountdownStart: "Start!", msgWaiting: "Waiting for opponent...", msgRematchOffer: "Opponent offered a rematch", msgDrawOffer: "Opponent offered a draw", btnAccept: "Accept", btnDecline: "Decline", msgCopySuccess: "Standard PGN Copied", labelMoves: "Moves", titleWinWhite: "White Won", titleWinBlack: "Black Won", titleDraw: "Draw", rsnCheckmate: "by Checkmate", rsnResign: "by Resignation", rsnTimeout: "by Timeout", rsnStalemate: "by Stalemate", rsnAgreed: "by Agreement", msgDisconnected: "Opponent missing... auto-resign in", rsnAbandoned: "by Abandonment" }
     };
 
-    // دالة PGN كاملة بالرؤوس
     function updateMovesHistory() {
         if (!game) return;
         let pgnGame = new Chess();
@@ -212,8 +211,9 @@ $(document).ready(function() {
         }
     }
 
-    // ===== دوال التظليل و Premove المصححة =====
+    // ===== دوال التظليل و Premove المصححة بشكل كامل =====
     function cancelPremove() { 
+        if (premove) console.log("cancelPremove called, clearing premove:", premove);
         premove = null; 
         $('.square-55d63').removeClass('premove-highlight'); 
     }
@@ -235,24 +235,38 @@ $(document).ready(function() {
     }
 
     function executePremove() { 
-        if (!premove) return false;
-        if (game.turn() !== myPlayerColor.charAt(0)) return false;
-        if (game.game_over()) { cancelPremove(); return false; }
+        if (!premove) {
+            console.log("executePremove: no premove stored");
+            return false;
+        }
+        if (game.turn() !== myPlayerColor.charAt(0)) {
+            console.log("executePremove: not my turn (turn=" + game.turn() + ")");
+            return false;
+        }
+        if (game.game_over()) { 
+            console.log("executePremove: game over");
+            cancelPremove(); 
+            return false; 
+        }
         
         // التحقق من وجود قطعة صالحة في المربع المصدر
         var piece = game.get(premove.from);
         if (!piece || piece.color !== myPlayerColor.charAt(0)) {
+            console.log("executePremove: invalid piece at " + premove.from, piece);
             cancelPremove();
             return false;
         }
         
+        console.log("executePremove: attempting move", premove);
         let move = game.move({ from: premove.from, to: premove.to, promotion: 'q' }); 
         if (move) { 
-            cancelPremove();
+            console.log("executePremove: success", move);
+            cancelPremove();  // نمسح premove بعد نجاح التنفيذ
             board.position(game.fen(), false);
             processLocalMove(move);
             return true;
         } else {
+            console.log("executePremove: move failed");
             cancelPremove();
             return false;
         }
@@ -404,7 +418,7 @@ $(document).ready(function() {
                 }
             }
 
-            // استقبال حركة الخصم ومعالجة الـ premove
+            // ===== استقبال حركة الخصم مع تحسين Premove =====
             if (d.lastMove && d.status === 'playing' && d.fen !== game.fen()) {
                 if (d.pgn) {
                     game.load_pgn(d.pgn);
@@ -424,16 +438,22 @@ $(document).ready(function() {
                 let isMyTurn = (game.turn() === myPlayerColor.charAt(0));
                 if(board) board.draggable(gameStarted && isMyTurn);
                 
-                if (isMyTurn && gameStarted && !game.game_over()) {
-                    // تأخير بسيط لضمان اكتمال تحديث الرقعة
-                    setTimeout(function() { executePremove(); }, 20);
+                console.log("After opponent move: isMyTurn =", isMyTurn, "premove =", premove);
+                if (isMyTurn && gameStarted && !game.game_over() && premove) {
+                    // تأخير 50 مللي لضمان اكتمال تحديث الرقعة
+                    setTimeout(function() { 
+                        console.log("Executing premove now...");
+                        executePremove(); 
+                    }, 50);
                 } else {
+                    if (!premove) console.log("No premove to execute");
                     cancelPremove();
                 }
             } else if (d.lastMove && d.status === 'playing') {
                 highlightLastMove(d.lastMove.from, d.lastMove.to);
             }
 
+            // باقي الكود كما هو (actions, game end, etc.) ...
             if (d.action && d.action.type && d.action.by !== myPlayerColor) {
                 if (d.action.state === 'offered') {
                     let msg = d.action.type === 'rematch' ? translations[currentLang].msgRematchOffer : translations[currentLang].msgDrawOffer;
@@ -562,12 +582,13 @@ $(document).ready(function() {
         setTimeout(() => { $('#endGameModal').fadeIn(300); }, 300); 
     }
 
-    // ===== أحداث التفاعل مع الرقعة (النقر والسحب) مع دعم premove =====
+    // ===== أحداث التفاعل مع الرقعة (نقرة وسحب) =====
     $(document).on('click', '#board .square-55d63', function() {
         if (!gameStarted || game.game_over()) return;
         var square = $(this).attr('data-square'); 
         var myColorCode = myPlayerColor.charAt(0);
         
+        // إذا كان هناك premove، نلغيه لأن المستخدم بدأ تفاعلاً جديداً
         if (premove) cancelPremove();
         
         if (selectedSquare) {
@@ -579,7 +600,9 @@ $(document).ready(function() {
                     return; 
                 }
             } else {
+                // تخزين premove بالنقر
                 premove = { from: selectedSquare, to: square };
+                console.log("Stored premove (click):", premove);
                 clearHighlights(); 
                 $('.square-' + selectedSquare).addClass('premove-highlight'); 
                 $('.square-' + square).addClass('premove-highlight');
@@ -606,6 +629,9 @@ $(document).ready(function() {
         if (!gameStarted || game.game_over()) return false; 
         var myColorCode = myPlayerColor.charAt(0); 
         if (pieceStr.charAt(0) !== myColorCode) return false;
+        
+        // إذا كان دور اللاعب، نلغي premove لأنه سيلعب حركة فورية
+        // إذا لم يكن دوره، نلغي premove أيضاً لأن المستخدم يريد تخزين premove جديد (أفضل إلغاء القديم)
         cancelPremove();
         clearHighlights();
         selectedSquare = source; 
@@ -620,9 +646,11 @@ $(document).ready(function() {
             return 'snapback';
         }
         if (game.turn() !== myPlayerColor.charAt(0)) {
+            // ليس دوري -> نخزن premove
             clearHighlights();
             selectedSquare = null;
             premove = { from: source, to: target };
+            console.log("Stored premove (drag):", premove);
             $('.square-' + source).addClass('premove-highlight');
             $('.square-' + target).addClass('premove-highlight');
             return 'snapback';
