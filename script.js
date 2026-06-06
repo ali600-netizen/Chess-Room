@@ -11,6 +11,19 @@ const db = firebase.database();
 const auth = firebase.auth();
 
 $(document).ready(function() {
+    // === قراءة الرابط الذكي القادم من تيليجرام ===
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomFromUrl = urlParams.get('room');
+
+    if (roomFromUrl) {
+        // إذا جاء من البوت: نضع الشفرة، ونقفل الحقل لمنع العبث به
+        $('#roomId').val(roomFromUrl).prop('readonly', true).css('opacity', '0.6');
+    } else {
+        // إذا دخل للموقع مباشرة: نقترح عليه رقم غرفة عشوائي
+        let randomSuggestion = Math.floor(1000 + Math.random() * 9000);
+        $('#roomId').val(randomSuggestion);
+    }
+
     var myUid = null;
     var myPresenceRef = null;
     var connectedRef = db.ref('.info/connected');
@@ -22,7 +35,7 @@ $(document).ready(function() {
     var abandonTimer = null, abandonSeconds = 30; 
     var currentRoomId = null, myPlayerColor = 'white', activeRoomRef = null;
     var isGameEndHandled = false; 
-    var pendingPromotionMove = null;   // متغير لحفظ النقلة المؤقتة للترقية
+    var pendingPromotionMove = null;
 
     auth.signInAnonymously().catch(e => console.error("Auth:", e));
     auth.onAuthStateChanged(user => { 
@@ -345,8 +358,13 @@ $(document).ready(function() {
                 isWaiting = (data.status === 'waiting');
                 setupPresence();
             } else if (!snapshot.exists() || (data && data.status !== 'waiting' && data.status !== 'playing')) {
-                let colorsArr = ['white', 'black']; let selectedColor = $('#colorChoice').val();
-                myPlayerColor = selectedColor === 'random' ? colorsArr[Math.floor(Math.random() * colorsArr.length)] : selectedColor;
+                // نظام اختيار اللون الذكي والعشوائي المعدل
+                let selectedColor = $('#colorChoice').val();
+                if (selectedColor === 'random') {
+                    myPlayerColor = (Date.now() % 2 === 0) ? 'white' : 'black';
+                } else {
+                    myPlayerColor = selectedColor;
+                }
                 game.reset(); whiteSeconds = minutes * 60; blackSeconds = minutes * 60;
                 await activeRoomRef.set({
                     fen: game.fen(), pgn: game.pgn(), lastMove: null,
