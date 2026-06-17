@@ -13,32 +13,24 @@ const auth = firebase.auth();
 /* =========================================================================
    محرّك الأصوات — مُولَّدة بالكود (Web Audio API)، صفر اعتماد على أي ملف خارجي
    ========================================================================= */
+/* =========================================================================
+   محرّك الأصوات — مقطوعات Piano من Lichess (مرخّصة AGPLv3+)، مُستضافة محلياً
+   ========================================================================= */
 class SoundEngine {
-    constructor() { this.ctx = null; this.enabled = localStorage.getItem('chessSound') !== 'off'; }
-    _ensureCtx() {
-        if (!this.ctx) { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
-        if (this.ctx.state === 'suspended') { this.ctx.resume().catch(() => {}); }
+    constructor() {
+        this.enabled = localStorage.getItem('chessSound') !== 'off';
+        this.files = {
+            move: 'sounds/Move.mp3', capture: 'sounds/Capture.mp3', check: 'sounds/Check.mp3',
+            victory: 'sounds/Victory.mp3', defeat: 'sounds/Defeat.mp3', draw: 'sounds/Draw.mp3',
+            count3: 'sounds/CountDown3.mp3', count2: 'sounds/CountDown2.mp3', count1: 'sounds/CountDown1.mp3'
+        };
+        this.cache = {};
     }
-    _tone(freq, dur, type, start, peak) {
-        const ctx = this.ctx;
-        const osc = ctx.createOscillator(); const gain = ctx.createGain();
-        osc.type = type; osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0, ctx.currentTime + start);
-        gain.gain.linearRampToValueAtTime(peak, ctx.currentTime + start + 0.012);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.start(ctx.currentTime + start); osc.stop(ctx.currentTime + start + dur + 0.02);
-    }
+    _get(type) { if (!this.cache[type]) { this.cache[type] = new Audio(this.files[type]); } return this.cache[type]; }
     play(type) {
-        if (!this.enabled) return;
-        try {
-            this._ensureCtx();
-            if (type === 'move') this._tone(700, 0.08, 'sine', 0, 0.15);
-            else if (type === 'capture') this._tone(280, 0.12, 'square', 0, 0.10);
-            else if (type === 'check') { this._tone(880, 0.09, 'triangle', 0, 0.16); this._tone(660, 0.12, 'triangle', 0.09, 0.16); }
-            else if (type === 'start') { this._tone(523, 0.1, 'sine', 0, 0.14); this._tone(659, 0.1, 'sine', 0.1, 0.14); this._tone(784, 0.16, 'sine', 0.2, 0.14); }
-            else if (type === 'gameEnd') { this._tone(440, 0.16, 'sine', 0, 0.14); this._tone(349, 0.16, 'sine', 0.16, 0.14); this._tone(294, 0.3, 'sine', 0.32, 0.14); }
-        } catch (e) { /* صوت غير متاح، لا حاجة لإيقاف اللعبة بسبب ذلك */ }
+        if (!this.enabled || !this.files[type]) return;
+        try { let a = this._get(type); a.currentTime = 0; a.play().catch(() => {}); }
+        catch (e) { /* صوت غير متاح، لا حاجة لإيقاف اللعبة بسبب ذلك */ }
     }
     toggle() { this.enabled = !this.enabled; localStorage.setItem('chessSound', this.enabled ? 'on' : 'off'); return this.enabled; }
 }
@@ -47,19 +39,11 @@ const sfx = new SoundEngine();
 /* =========================================================================
    مولّد رموز القطع — SVG ذاتي الاستضافة، يستبدل الاعتماد على Chess.com
    ========================================================================= */
-const PIECE_GLYPH = { k: '\u265A', q: '\u265B', r: '\u265C', b: '\u265D', n: '\u265E', p: '\u265F' };
+// قطع RhosGFX (مرخّصة CC0) — مُستضافة ضمن مجلد pieces/ بالمشروع نفسه، لا اعتماد خارجي إطلاقاً
 function pieceIconURI(pieceCode) {
     let colorChar = pieceCode.charAt(0).toLowerCase();
-    let typeChar = pieceCode.charAt(1).toLowerCase();
-    let isWhite = colorChar === 'w';
-    let fill = isWhite ? '#F7F3E8' : '#0E1B4D';
-    let stroke = isWhite ? '#0E1B4D' : '#C9A86A';
-    let glyph = PIECE_GLYPH[typeChar] || '?';
-    let svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
-        '<text x="50" y="60" font-size="74" text-anchor="middle" ' +
-        'font-family="DejaVu Sans, Noto Sans Symbols, Segoe UI Symbol, Apple Symbols, sans-serif" ' +
-        'fill="' + fill + '" stroke="' + stroke + '" stroke-width="2.2" paint-order="stroke fill">' + glyph + '</text></svg>';
-    return 'data:image/svg+xml,' + encodeURIComponent(svg);
+    let typeChar = pieceCode.charAt(1).toUpperCase();
+    return 'pieces/' + colorChar + typeChar + '.svg';
 }
 
 $(document).ready(function() {
@@ -111,6 +95,7 @@ $(document).ready(function() {
         if (user) {
             myUid = user.uid;
             $('#createBtn').prop('disabled', false).text(translations[currentLang].btnEnter);
+            tryAutoResume();
         }
     });
     // إصلاح: إذا فشل الاتصال تماماً، أظهر رسالة وخيار إعادة محاولة بدل بقاء الزر معطّلاً للأبد
@@ -239,14 +224,14 @@ $(document).ready(function() {
         $('#waitingOverlay').fadeOut(200);
         $('#interactiveOverlay').fadeOut(200);
         let count = 3; $('#countdownOverlay').text(count).fadeIn(200);
+        sfx.play('count3');
         let countInt = setInterval(() => {
             count--;
-            if (count > 0) $('#countdownOverlay').text(count);
-            else if (count === 0) $('#countdownOverlay').text(translations[currentLang].msgCountdownStart);
+            if (count > 0) { $('#countdownOverlay').text(count); sfx.play('count' + count); }
+            else if (count === 0) { $('#countdownOverlay').text(translations[currentLang].msgCountdownStart); }
             else {
                 clearInterval(countInt);
                 $('#countdownOverlay').fadeOut(200);
-                sfx.play('start');
                 gameStarted = true;
                 isCountingDown = false;
                 updateActiveTimerStyle();
@@ -256,6 +241,19 @@ $(document).ready(function() {
             }
         }, 1000);
     }
+
+    var heartbeatInterval = null;
+    function startHeartbeat() {
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+        function beat() {
+            if (activeRoomRef && myPlayerColor) {
+                activeRoomRef.update({ [myPlayerColor + 'LastSeen']: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
+            }
+        }
+        beat();
+        heartbeatInterval = setInterval(beat, 4000);
+    }
+    function stopHeartbeat() { if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; } }
 
     function setupPresence() {
         if (!currentRoomId || !myPlayerColor) return;
@@ -267,6 +265,7 @@ $(document).ready(function() {
                 myPresenceRef.set(true).catch(() => {});
             }
         });
+        startHeartbeat();
     }
 
     function updateCapturedPieces() {
@@ -417,8 +416,7 @@ $(document).ready(function() {
         $('#modalRematchBtn').prop('disabled', false).text(translations[currentLang].btnRematch);
     }
 
-    $('#createBtn').click(async function() {
-        let rawRoom = $('#roomId').val().trim();
+    async function enterRoom(rawRoom) {
         // إصلاح: تنظيف وفرض رقم فقط (3-6 خانات) قبل أي اتصال بـ Firebase
         if (!/^\d{3,6}$/.test(rawRoom)) {
             $('#roomError').addClass('visible');
@@ -426,10 +424,8 @@ $(document).ready(function() {
         }
         $('#roomError').removeClass('visible');
         currentRoomId = rawRoom;
-        myUserName = ($('#userName').val() || '').trim().slice(0, 16);
-        localStorage.setItem('chessUserName', myUserName);
 
-        let btn = $(this); let originalText = btn.text();
+        let btn = $('#createBtn'); let originalText = translations[currentLang].btnEnter;
         btn.prop('disabled', true).text(currentLang === 'ar' ? 'جاري الاتصال...' : 'Connecting...');
 
         if (!myUid) {
@@ -505,6 +501,8 @@ $(document).ready(function() {
                 whiteSeconds = finalData.whiteSeconds; blackSeconds = finalData.blackSeconds; incrementSeconds = finalData.increment;
                 isWaiting = false;
             }
+            // إصلاح: حفظ الغرفة النشطة محلياً — تحديث الصفحة لن يُخرجك من الغرفة بعد الآن
+            localStorage.setItem('chessActiveRoom', currentRoomId);
             setupPresence();
             updatePlayerLabels(finalData);
         } catch (error) {
@@ -535,6 +533,8 @@ $(document).ready(function() {
             $('#waitingOverlay').fadeIn(200);
         } else if (game.history().length > 0 && !game.game_over()) {
             gameStarted = true; updateActiveTimerStyle(); startTimer();
+        } else if (game.game_over()) {
+            // إصلاح: استئناف غرفة انتهت أثناء غيابك يعرض نتيجتها الحقيقية بدل تجميد الشاشة
         } else {
             if (!isCountingDown) { isCountingDown = true; runCountdown(); }
         }
@@ -553,8 +553,11 @@ $(document).ready(function() {
             if (d.playersCount === 2) {
                 let oppColor = myPlayerColor === 'white' ? 'black' : 'white';
                 let isOppOnline = d[oppColor + 'Online'];
+                // إصلاح: إشارة ثانية مستقلة عبر نبضة زمنية من الخادم — لا تعتمد فقط على onDisconnect
+                let oppLastSeen = d[oppColor + 'LastSeen'] || 0;
+                let isStale = oppLastSeen > 0 && (Date.now() - oppLastSeen) > 12000;
 
-                if (isOppOnline === false) {
+                if (isOppOnline === false || isStale) {
                     $('#oppPresence').addClass('presence-offline').removeClass('presence-online');
                     if (d.status === 'playing' && !game.game_over()) {
                         if (!abandonTimer) {
@@ -640,9 +643,29 @@ $(document).ready(function() {
                 }
             }
         });
+    }
+
+    $('#createBtn').click(async function() {
+        myUserName = ($('#userName').val() || '').trim().slice(0, 16);
+        localStorage.setItem('chessUserName', myUserName);
+        await enterRoom($('#roomId').val().trim());
     });
 
-    $('#cancelMatchBtn').click(function() { if (activeRoomRef) { activeRoomRef.remove(); activeRoomRef.off(); } location.reload(); });
+    // إصلاح: استئناف تلقائي للغرفة المحفوظة بعد أي تحديث للصفحة — لا حاجة لإعادة كتابة الرمز
+    var autoResumeDone = false;
+    function tryAutoResume() {
+        if (autoResumeDone) return; autoResumeDone = true;
+        let savedRoom = localStorage.getItem('chessActiveRoom');
+        if (savedRoom && /^\d{3,6}$/.test(savedRoom) && !roomFromUrl) {
+            $('#roomId').val(savedRoom);
+            enterRoom(savedRoom);
+        }
+    }
+
+    $('#cancelMatchBtn').click(function() {
+        localStorage.removeItem('chessActiveRoom');
+        if (activeRoomRef) { activeRoomRef.remove(); activeRoomRef.off(); } location.reload();
+    });
 
     $('#resignBtn').click(function() {
         if (!gameStarted || game.game_over()) return;
@@ -682,7 +705,8 @@ $(document).ready(function() {
     });
 
     $('#modalHomeBtn').click(function() {
-        stopTimer(); $('#gameArea').hide(); $('#endGameModal').hide(); $('#disconnectBanner').hide(); $('#lobby').fadeIn(300);
+        stopTimer(); stopHeartbeat(); $('#gameArea').hide(); $('#endGameModal').hide(); $('#disconnectBanner').hide(); $('#lobby').fadeIn(300);
+        localStorage.removeItem('chessActiveRoom');
         if (activeRoomRef) activeRoomRef.off();
         if (myPresenceRef) myPresenceRef.onDisconnect().cancel();
     });
@@ -741,7 +765,10 @@ $(document).ready(function() {
         if (isGameEndHandled) return;
         isGameEndHandled = true;
         gameStarted = false; stopTimer(); $('#resignBtn').hide(); $('#drawOfferBtn').hide(); $('#disconnectBanner').fadeOut(200);
-        sfx.play('gameEnd');
+
+        if (!winnerColor) { sfx.play('draw'); }
+        else if (winnerColor === myPlayerColor.charAt(0)) { sfx.play('victory'); }
+        else { sfx.play('defeat'); }
 
         let titleTxt = translations[currentLang].titleDraw;
         if (winnerColor === 'w') { titleTxt = translations[currentLang].titleWinWhite; }
@@ -819,4 +846,4 @@ $(document).ready(function() {
         if (board) board.position(game.fen(), false);
     }
 });
- 
+
