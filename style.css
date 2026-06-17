@@ -11,7 +11,7 @@ body.theme-royal {
     --primary-color: #0B174D; --primary-hover: #1A2E73;
     --danger-color: #A8834C; --danger-hover: #8a6a3b;
     --timer-bg: #F4F1EA; --timer-border: #C9A86A;
-    --overlay-bg: rgba(11, 23, 77, 0.85); --legal-dot: rgba(201, 168, 106, 0.85);
+    --overlay-bg: rgba(11, 23, 77, 0.93); --legal-dot: rgba(201, 168, 106, 0.85);
     --accent-soft: rgba(201, 168, 106, 0.18);
 }
 body.theme-modern {
@@ -21,7 +21,7 @@ body.theme-modern {
     --primary-color: #3b82f6; --primary-hover: #2563eb;
     --danger-color: #ef4444; --danger-hover: #dc2626;
     --timer-bg: #0f172a; --timer-border: #334155;
-    --overlay-bg: rgba(15, 23, 42, 0.85); --legal-dot: rgba(248, 250, 252, 0.35);
+    --overlay-bg: rgba(15, 23, 42, 0.93); --legal-dot: rgba(248, 250, 252, 0.35);
     --accent-soft: rgba(59, 130, 246, 0.15);
 }
 body.theme-classic {
@@ -31,7 +31,7 @@ body.theme-classic {
     --primary-color: #81b64c; --primary-hover: #6a9c3d;
     --danger-color: #fa4b4b; --danger-hover: #e03c3c;
     --timer-bg: #f8f8f8; --timer-border: #cccccc;
-    --overlay-bg: rgba(255, 255, 255, 0.85); --legal-dot: rgba(0, 0, 0, 0.25);
+    --overlay-bg: rgba(255, 255, 255, 0.93); --legal-dot: rgba(0, 0, 0, 0.25);
     --accent-soft: rgba(129, 182, 76, 0.12);
 }
 
@@ -88,17 +88,16 @@ body {
 .lang-btn:hover { background: var(--accent-soft); }
 
 /* ===================== الشعار ===================== */
-.logo-container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); margin-bottom: var(--space-5); }
-.site-logo { width: 52px; height: 52px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15)); }
-.logo-title { text-align: center; font-family: var(--font-display); font-weight: 400; font-size: 2.3rem; margin: 0; letter-spacing: 0.5px; }
-.logo-subtitle { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin: 0; }
+.logo-container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); margin-bottom: var(--space-6); }
+.site-logo { width: 76px; height: 76px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.18)); }
+.logo-title { text-align: center; font-family: var(--font-display); font-weight: 400; font-size: 2.2rem; margin: 0; letter-spacing: 0.5px; }
 
 /* ===================== اللوبي ===================== */
 .panel { background-color: var(--panel-bg); border: 2px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow-md); transition: all 0.4s ease; }
 h3 { margin-top: 0; border-bottom: 2px solid var(--border-color); padding-bottom: var(--space-3); font-size: 1.3rem; font-weight: 800; font-family: var(--font-body); }
 
 /* --- الختم الذهبي لرقم الغرفة (العنصر المميز) --- */
-.room-seal-wrap { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+.room-seal-wrap { display: flex; align-items: stretch; gap: var(--space-3); margin-bottom: var(--space-4); }
 .room-seal {
     flex: 1; position: relative; background: var(--bg-color);
     border: 2px solid var(--border-color); border-radius: var(--radius-md);
@@ -140,7 +139,7 @@ input::placeholder { color: var(--text-muted); opacity: 0.6; }
 .btn-secondary:hover:not(:disabled) { background: var(--accent-soft); transform: translateY(-1px); }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
 .btn-share {
-    width: 56px; height: 56px; flex: 0 0 56px; padding: 0; border-radius: var(--radius-md);
+    width: 56px; height: auto; flex: 0 0 56px; padding: 0; border-radius: var(--radius-md);
     background: var(--primary-color); color: #fff; box-shadow: var(--shadow-sm);
 }
 .btn-share svg { width: 24px; height: 24px; }
@@ -157,7 +156,7 @@ input::placeholder { color: var(--text-muted); opacity: 0.6; }
 .presence-dot { position: absolute; bottom: -3px; right: -3px; width: 13px; height: 13px; border-radius: 50%; background-color: #64748b; border: 2px solid var(--bg-color); transition: background-color 0.3s; z-index: 10; }
 .presence-online { background-color: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.5); }
 .presence-offline { background-color: #64748b; }
-.disconnect-banner { position: absolute; top: 15px; left: 15px; right: 15px; background: rgba(239, 68, 68, 0.95); color: white; padding: var(--space-3); border-radius: var(--radius-sm); text-align: center; font-weight: 800; z-index: 50; backdrop-filter: blur(4px); box-shadow: 0 5px 15px rgba(0,0,0,0.4); display: none; direction: ltr; font-family: var(--font-body); }
+.disconnect-banner { position: absolute; top: 15px; left: 15px; right: 15px; background: rgba(220, 38, 38, 0.97); color: white; padding: var(--space-3); border-radius: var(--radius-sm); text-align: center; font-weight: 800; z-index: 50; box-shadow: 0 5px 15px rgba(0,0,0,0.4); display: none; direction: ltr; font-family: var(--font-body); }
 .disconnect-banner .sec { display: inline-block; min-width: 25px; text-align: right; font-family: var(--font-mono); }
 
 /* ===================== القطع المأكولة ===================== */
@@ -183,7 +182,7 @@ body[dir="rtl"] .score-adv { margin-left: 0; margin-right: 5px; }
 .legal-move-capture { background-image: radial-gradient(circle, transparent 38%, var(--legal-dot) 39%, var(--legal-dot) 46%, transparent 47%) !important; }
 
 /* ===================== الشاشات الطافية ===================== */
-.status-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay-bg); color: #ffffff; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); padding: var(--space-5); text-align: center; }
+.status-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay-bg); color: #ffffff; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; padding: var(--space-5); text-align: center; }
 .interactive-layer { z-index: 300 !important; }
 .countdown-text { font-size: 5.5rem; font-weight: 900; color: #ffffff !important; font-family: var(--font-mono); text-shadow: 0 5px 20px rgba(0,0,0,0.7); }
 .overlay-text { font-size: 1.4rem; font-weight: 800; margin-bottom: var(--space-5); color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); font-family: var(--font-body); }
@@ -196,7 +195,7 @@ body[dir="rtl"] .score-adv { margin-left: 0; margin-right: 5px; }
 .connection-error.visible { display: flex; }
 
 /* ===================== سجل النقلات ===================== */
-.moves-box { background: var(--panel-bg); padding: var(--space-3); border-radius: var(--radius-sm); margin-top: var(--space-3); max-height: 80px; overflow-y: auto; font-family: var(--font-mono); font-weight: 600; font-size: 1rem; border: 1px solid var(--border-color); direction: ltr; text-align: left; scroll-behavior: smooth; }
+.moves-box { background: var(--panel-bg); padding: var(--space-3); border-radius: var(--radius-sm); margin-top: var(--space-3); max-height: 80px; overflow-y: auto; font-family: var(--font-mono); font-weight: 700; font-size: 1rem; border: 1px solid var(--border-color); direction: ltr; text-align: left; scroll-behavior: smooth; }
 .game-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-4); }
 .game-actions .btn { padding: 12px 5px; font-size: 1.05rem; margin-top: 0; }
 
@@ -246,3 +245,4 @@ body[dir="rtl"] .score-adv { margin-left: 0; margin-right: 5px; }
 @media (min-width: 1080px) {
     .container { max-width: 1040px; }
 }
+
