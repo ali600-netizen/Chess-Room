@@ -11,10 +11,9 @@
     <link rel="icon" type="image/jpeg" href="logo.jpg">
 
     <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&family=Cairo:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     
-    <link rel="stylesheet" href="style.css?v=16">
+    <link rel="stylesheet" href="style.css?v=17">
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -32,6 +31,7 @@
                 <select id="themeChoice" class="lang-btn" style="padding: 0 10px;">
                     <option value="royal" data-key="themeRoyal">ملكي وفضي</option>
                     <option value="modern" data-key="themeModern">داكن حديث</option>
+                    <option value="forest" data-key="themeForest">خشبي أخضر</option>
                     <option value="classic" data-key="themeChesscom">فاتح كلاسيكي</option>
                 </select>
             </div>
@@ -39,52 +39,41 @@
         </div>
 
         <div class="logo-container">
-            <h1 class="logo-title">غرفة الشطرنج</h1>
+            <h1 id="mainTitle" class="logo-title" data-key="siteTitle">غرفة الشطرنج</h1>
         </div>
 
         <div id="lobby" class="panel fade-in">
-            <h3 data-key="lobbyTitle">إعدادات المباراة</h3>
             
-            <div class="username-row form-group">
-                <label data-key="labelName">اسمك</label>
-                <input type="text" id="userName" class="field-input" maxlength="16" placeholder="...">
+            <div class="form-group">
+                <input type="text" id="userName" class="field-input w-full text-center" maxlength="16" placeholder="..." data-key="phName">
             </div>
 
-            <div class="room-seal-wrap">
-                <div class="room-seal">
-                    <span class="room-seal-label" data-key="labelRoom">رقم الغرفة</span>
-                    <input type="text" id="roomId" inputmode="numeric" maxlength="6">
-                    <div id="roomLockedBadge" class="room-locked-badge" data-key="msgRoomLocked">🔒 مقفل من رابط مشترك</div>
-                    <div id="roomError" class="room-error" data-key="msgRoomInvalid">أرقام فقط، من 3 إلى 6 خانات</div>
+            <div class="form-group room-input-group">
+                <input type="text" id="roomId" inputmode="numeric" maxlength="6" class="field-input text-center" placeholder="رقم الغرفة" style="font-size: 1.8rem; font-family: var(--font-mono); letter-spacing: 4px;">
+                <button id="lobbyShareBtn" class="icon-btn" style="background: var(--primary-color); color: #fff; border:none;" title="نسخ رابط الغرفة">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                </button>
+            </div>
+            <div id="roomLockedBadge" class="room-locked-badge" data-key="msgRoomLocked">🔒 مقفل من رابط مشترك</div>
+            <div id="roomError" class="room-error" data-key="msgRoomInvalid">أرقام فقط، من 3 إلى 6 خانات</div>
+
+            <div class="form-row">
+                <div class="form-group half-width">
+                    <label data-key="labelMinutes">الوقت</label>
+                    <select id="timeMinutes">
+                        <option value="1">1</option><option value="3" selected>3</option><option value="5">5</option><option value="10">10</option>
+                    </select>
+                </div>
+                <div class="form-group half-width">
+                    <label data-key="labelIncrement">الزيادة</label>
+                    <select id="timeIncrement">
+                        <option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="5">5</option>
+                    </select>
                 </div>
             </div>
 
             <div class="form-group">
-                <label data-key="labelMinutes">الوقت (دقائق)</label>
-                <select id="timeMinutes">
-                    <option value="1">1</option>
-                    <option value="3" selected>3</option>
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="30">30</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label data-key="labelIncrement">الزيادة (ثواني)</label>
-                <select id="timeIncrement">
-                    <option value="0" selected>0</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label data-key="labelColor">اختر لونك</label>
+                <label data-key="labelColor">اللون</label>
                 <select id="colorChoice">
                     <option value="random" data-key="colorRandom">عشوائي</option>
                     <option value="white" data-key="colorWhite">أبيض</option>
@@ -93,11 +82,11 @@
             </div>
 
             <div id="connectionError" class="connection-error">
-                <span style="color:var(--danger-color); font-weight:bold; text-align:center;" data-key="msgConnFailed">تعذّر الاتصال، تحقق من الإنترنت</span>
-                <button id="retryConnBtn" class="btn btn-secondary" style="padding: 10px;" data-key="btnRetry">إعادة المحاولة</button>
+                <span style="color:var(--danger-color); font-weight:bold;" data-key="msgConnFailed">تعذّر الاتصال</span>
+                <button id="retryConnBtn" class="btn btn-secondary" data-key="btnRetry">إعادة المحاولة</button>
             </div>
 
-            <button id="createBtn" class="btn btn-primary" style="margin-top: 10px;" data-key="btnEnter">دخول الغرفة</button>
+            <button id="createBtn" class="btn btn-primary" data-key="btnEnter">دخول الغرفة</button>
         </div>
 
         <div id="gameArea" style="display: none; width: 100%;">
@@ -120,7 +109,6 @@
                 <div id="disconnectBanner" class="disconnect-banner">
                     <span data-key="msgDisconnected">انقطع الخصم... استسلام بعد</span> <span id="abandonSec" class="sec">30</span>
                 </div>
-
                 <div id="board"></div>
                 
                 <div id="interactiveOverlay" class="status-overlay interactive-layer" style="display: none;">
@@ -137,9 +125,6 @@
                     <div class="spinner"></div>
                     <p class="overlay-text" data-key="msgWaiting">بانتظار الخصم...</p>
                     <div class="overlay-actions">
-                        <button id="shareRoomBtn" class="btn btn-share" title="مشاركة الرابط">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                        </button>
                         <button id="cancelMatchBtn" class="btn btn-danger overlay-btn" data-key="btnCancel">إلغاء المباراة</button>
                     </div>
                 </div>
@@ -163,7 +148,6 @@
                 <button id="drawOfferBtn" class="btn btn-secondary fade-in" data-key="btnDraw">طلب تعادل</button>
             </div>
             <div class="moves-box fade-in">
-                <span style="color:var(--text-muted); font-size:0.8rem;" data-key="labelMoves">سجل النقلات:</span><br>
                 <span id="movesHistory"></span>
             </div>
         </div>
@@ -175,27 +159,26 @@
                 <div class="stats-row">
                     <div class="stat-box">
                         <span id="endGameMoves" class="stat-value">0</span>
-                        <span class="stat-label" data-key="labelMoves">نقلة</span>
                     </div>
                 </div>
                 <div class="modal-actions">
                     <button id="modalRematchBtn" class="btn btn-primary" data-key="btnRematch">إعادة التحدي</button>
                     <button id="modalCopyPgnBtn" class="btn btn-secondary" data-key="btnCopy">نسخ النقلات</button>
-                    <button id="modalHomeBtn" class="btn btn-secondary" style="border: none;" data-key="btnHome">القائمة الرئيسية</button>
+                    <button id="modalHomeBtn" class="btn btn-secondary" style="border: none;" data-key="btnHome">الرئيسية</button>
                 </div>
             </div>
         </div>
 
         <div id="promotionModal" class="modal-overlay" style="display: none; z-index: 400;">
             <div class="modal-content pop-in" style="max-width: 300px; padding: 25px;">
-                <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; border:none; padding-bottom:0;" data-key="promptPromotion">اختر الترقية</h3>
-                <div class="promotion-pieces" style="display: flex; justify-content: space-around; align-items: center; gap: 10px;">
+                <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; border:none;" data-key="promptPromotion">اختر الترقية</h3>
+                <div class="promotion-pieces" style="display: flex; justify-content: space-around; gap: 10px;">
                     <button class="promo-piece" data-piece="q"><img alt="Queen"></button>
                     <button class="promo-piece" data-piece="n"><img alt="Knight"></button>
                     <button class="promo-piece" data-piece="r"><img alt="Rook"></button>
                     <button class="promo-piece" data-piece="b"><img alt="Bishop"></button>
                 </div>
-                <button id="cancelPromoBtn" class="btn btn-secondary" style="margin-top: 20px; padding: 12px;" data-key="btnCancelPromo">إلغاء</button>
+                <button id="cancelPromoBtn" class="btn btn-secondary" style="margin-top: 20px;" data-key="btnCancelPromo">إلغاء</button>
             </div>
         </div>
 
@@ -206,7 +189,6 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    
-    <script src="script.js?v=16"></script>
+    <script src="script.js?v=17"></script>
 </body>
 </html>
