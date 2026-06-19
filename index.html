@@ -1,17 +1,16 @@
-
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>غرفة الشطرنج | Chess Room</title>
-    <meta name="description" content="غرفة شطرنج مباشرة مع الأصدقاء. Real-time multiplayer chess rooms.">
+    <meta name="description" content="غرفة شطرنج مباشرة مع الأصدقاء.">
     <link rel="icon" type="image/jpeg" href="logo.jpg">
 
     <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&family=Cairo:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     
-    <link rel="stylesheet" href="style.css?v=19">
+    <link rel="stylesheet" href="style.css?v=20">
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -20,20 +19,21 @@
 <body>
 
     <div class="container">
+        <!-- شريط التحكم العلوي المدمج -->
         <div class="top-bar">
             <div class="top-bar-controls">
                 <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound">
                     <svg id="soundOnIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                     <svg id="soundOffIcon" style="display: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                 </button>
-                <select id="themeChoice" class="lang-btn" style="padding: 0 10px;">
+                <select id="themeChoice" class="lang-btn">
+                    <option value="grayscale" data-key="themeGray">رصاصي وأسود</option>
                     <option value="royal" data-key="themeRoyal">ملكي وفضي</option>
                     <option value="modern" data-key="themeModern">داكن حديث</option>
                     <option value="forest" data-key="themeForest">خشبي أخضر</option>
-                    <option value="grayscale" data-key="themeGray">رصاصي وأسود</option>
                     <option value="classic" data-key="themeChesscom">فاتح كلاسيكي</option>
                 </select>
-                <select id="boardStyleChoice" class="lang-btn" style="padding: 0 10px;">
+                <select id="boardStyleChoice" class="lang-btn">
                     <option value="solid" data-key="boardSolid">مربعات سادة</option>
                     <option value="hatched" data-key="boardHatched">مربعات مخططة</option>
                 </select>
@@ -52,7 +52,7 @@
 
             <div class="form-group room-input-group">
                 <input type="text" id="roomId" inputmode="numeric" maxlength="6" class="field-input text-center" placeholder="رقم الغرفة">
-                <button id="lobbyShareBtn" class="icon-btn share-btn" title="نسخ رابط الغرفة">
+                <button id="lobbyShareBtn" class="icon-btn share-btn" title="مشاركة">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                 </button>
             </div>
@@ -117,7 +117,7 @@
                     <p id="interactiveMsg" class="overlay-text"></p>
                     <div class="overlay-actions">
                         <button id="acceptActionBtn" class="btn btn-primary overlay-btn" data-key="btnAccept">موافق</button>
-                        <button id="declineActionBtn" class="btn btn-secondary overlay-btn" data-key="btnDecline">رفض</button>
+                        <button id="declineActionBtn" class="btn btn-gray overlay-btn" data-key="btnDecline">رفض</button>
                     </div>
                 </div>
                 
@@ -154,33 +154,42 @@
             </div>
         </div>
 
-        <div id="endGameModal" class="modal-overlay" style="display: none;">
+        <div id="endGameModal" class="modal-overlay" style="display: none; z-index: 500;">
             <div class="modal-content pop-in">
                 <h2 id="endGameTitle" data-key="titleDraw">النتيجة تعادل</h2>
                 <p id="endGameReason" data-key="rsnAgreed">بالاتفاق</p>
                 <div class="stats-row">
-                    <div class="stat-box">
-                        <span id="endGameMoves" class="stat-value">0</span>
-                    </div>
+                    <div class="stat-box"><span id="endGameMoves" class="stat-value">0</span></div>
                 </div>
-                <div class="modal-actions">
+                
+                <!-- الأزرار العادية -->
+                <div id="modalNormalActions" class="modal-actions">
                     <button id="modalRematchBtn" class="btn btn-primary" data-key="btnRematch">إعادة التحدي</button>
                     <button id="modalCopyPgnBtn" class="btn btn-secondary" data-key="btnCopy">نسخ النقلات</button>
                     <button id="modalHomeBtn" class="btn btn-secondary" style="border: none;" data-key="btnHome">الرئيسية</button>
+                </div>
+
+                <!-- أزرار الموافقة والرفض (تظهر فقط إذا الخصم طلب إعادة تحدي) -->
+                <div id="modalRematchOfferActions" class="modal-actions" style="display: none;">
+                    <p style="margin-bottom: 10px; font-weight: 800; color: var(--text-main);" data-key="msgRematchOffer">الخصم يطلب إعادة التحدي</p>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="acceptRematchBtn" class="btn btn-primary" data-key="btnAccept">موافق</button>
+                        <button id="declineRematchBtn" class="btn btn-gray" data-key="btnDecline">رفض</button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="promotionModal" class="modal-overlay" style="display: none; z-index: 600;">
             <div class="modal-content pop-in" style="max-width: 320px; padding: 25px;">
-                <h3 style="margin-top: 0; margin-bottom: 25px; font-size: 1.4rem; border:none;" data-key="promptPromotion">اختر الترقية</h3>
-                <div class="promotion-pieces" style="display: flex; justify-content: space-around; gap: 15px;">
+                <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; border:none;" data-key="promptPromotion">اختر الترقية</h3>
+                <div class="promotion-pieces" style="display: flex; justify-content: space-around; gap: 10px;">
                     <button class="promo-piece" data-piece="q"><img alt="Queen"></button>
                     <button class="promo-piece" data-piece="n"><img alt="Knight"></button>
                     <button class="promo-piece" data-piece="r"><img alt="Rook"></button>
                     <button class="promo-piece" data-piece="b"><img alt="Bishop"></button>
                 </div>
-                <button id="cancelPromoBtn" class="btn btn-secondary" style="margin-top: 25px;" data-key="btnCancelPromo">إلغاء</button>
+                <button id="cancelPromoBtn" class="btn btn-secondary" style="margin-top: 20px;" data-key="btnCancelPromo">إلغاء</button>
             </div>
         </div>
 
@@ -190,7 +199,8 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="script.js?v=19"></script>
+    <script src="script.js?v=20"></script>
 </body>
 </html>
+
 
