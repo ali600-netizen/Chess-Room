@@ -89,7 +89,7 @@ body {
 
 /* ===================== الشعار ===================== */
 .logo-container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); margin-bottom: var(--space-6); }
-.site-logo { width: 76px; height: 76px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.18)); }
+.site-logo { height: 120px; width: auto; max-width: 100%; border-radius: var(--radius-md); filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25)); }
 .logo-title { text-align: center; font-family: var(--font-display); font-weight: 400; font-size: 2.2rem; margin: 0; letter-spacing: 0.5px; }
 
 /* ===================== اللوبي ===================== */
@@ -245,4 +245,3 @@ body[dir="rtl"] .score-adv { margin-left: 0; margin-right: 5px; }
 @media (min-width: 1080px) {
     .container { max-width: 1040px; }
 }
-
