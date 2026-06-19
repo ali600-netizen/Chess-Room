@@ -29,21 +29,21 @@ class SoundEngine {
 }
 const sfx = new SoundEngine();
 
-/* القطع: نفس المستخدمة في Cburnett القياسية (تطابق صورتك تماماً) القطع السوداء صلبة بدون حواف بيضاء خارجية، وصليب الملك الأبيض موجود */
+/* القطع المتطابقة 100% مع الصورة: بيضاء كلاسيكية، سوداء ظلية صلبة بالكامل بدون حواف (Solid Black) ما عدا صليب الملك الأبيض */
 const PIECE_URIS = {
-  "wK": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='none' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22.5 11.625V6M20 8h5' stroke-linejoin='miter'/%3E%3Cpath d='M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5' fill='%23fff' stroke-linecap='butt' stroke-linejoin='miter'/%3E%3Cpath d='M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-3.5-7.5-13-10.5-16-4-3 6 5 10.5 5 10.5v7z' fill='%23fff'/%3E%3Cpath d='M11.5 30c5.5-3 15.5-3 21 0M11.5 33.5c5.5-3 15.5-3 21 0M11.5 37c5.5-3 15.5-3 21 0'/%3E%3C/g%3E%3C/svg%3E",
-  "wQ": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='%23fff' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM24.5 7.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM41 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM16 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM33 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0z'/%3E%3Cpath d='M9 26c8.5-1.5 21-1.5 27 0l2-12-7 11V11l-5.5 13.5-3-15-3 15-5.5-14V25L7 14l2 12zM9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 1.5 4 .5 2.5.5 2.5 9.5 2.5s9 0 9.5-2.5c.5-3 .5-2.5 1.5-4 1-2 2.5-2 2.5-4-8.5-1.5-21-1.5-27 0z' stroke-linecap='butt'/%3E%3Cpath d='M11.5 30c3.5-1 18.5-1 22 0M12 33.5c6-1 15-1 21 0' fill='none'/%3E%3C/g%3E%3C/svg%3E",
-  "wR": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='%23fff' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 39h27v-3H9v3zM12 36v-4h21v4H12zM11 14V9h4v2h5V9h5v2h5V9h4v5' stroke-linecap='butt'/%3E%3Cpath d='M34 14l-3 3H14l-3-3'/%3E%3Cpath d='M31 17v12.5H14V17' stroke-linecap='butt' stroke-linejoin='miter'/%3E%3Cpath d='M31 29.5l1.5 2.5h-20l1.5-2.5M11 14h23' fill='none' stroke-linejoin='miter'/%3E%3C/g%3E%3C/svg%3E",
-  "wB": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='none' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg fill='%23fff' stroke-linecap='butt'%3E%3Cpath d='M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zM15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z'/%3E%3C/g%3E%3Cpath d='M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5' stroke-linejoin='miter'/%3E%3C/g%3E%3C/svg%3E",
-  "wN": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='none' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M 22,10 C 32.5,11 38.5,18 38,39 L 15,39 C 15,30 25,32.5 23,18' fill='%23fff' stroke-linecap='butt'/%3E%3Cpath d='M 24,18 C 24.38,20.91 18.45,25.37 16,27 C 13,29 13.18,31.34 11,31 C 9.958,30.06 12.41,27.96 11,28 C 10,28 11.19,29.23 10,30 C 9,30 5.997,31 6,26 C 6,24 12,14 12,14 C 12,14 13.89,12.1 14,10.5 C 13.27,9.506 13.5,8.5 13.5,7.5 C 14.5,6.5 16.5,10 16.5,10 L 18.5,10 C 18.5,10 19.28,8.008 21,7 C 22,7 22,10 22,10' fill='%23fff' stroke-linecap='butt'/%3E%3Cpath d='M 9.5 25.5 A 0.5 0.5 0 1 1 8.5,25.5 A 0.5 0.5 0 1 1 9.5 25.5 z' fill='%23000' stroke-linecap='butt'/%3E%3Cpath d='M 15 15.5 A 0.5 1.5 0 1 1 14,15.5 A 0.5 1.5 0 1 1 15 15.5 z' fill='%23000' transform='matrix(0.866,0.5,-0.5,0.866,9.693,-5.173)'/%3E%3C/g%3E%3C/svg%3E",
-  "wP": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath d='M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z' fill='%23fff' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E",
+  "wK": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath fill='%23fff' stroke='%23000' stroke-width='1.5' d='M22.5 11.63V6M20 8h5M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath fill='%23fff' stroke='%23000' stroke-width='1.5' d='M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-3.5-7.5-13-10.5-16-4-3 6 5 10.5 5 10.5v7z' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath fill='none' stroke='%23000' d='M11.5 30c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0'/%3E%3C/svg%3E",
+  "wQ": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath fill='%23fff' stroke='%23000' stroke-width='1.5' d='M8 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM24.5 7.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM41 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM16 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM33 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0z'/%3E%3Cpath fill='%23fff' stroke='%23000' stroke-width='1.5' d='M9 26c8.5-1.5 21-1.5 27 0l2-12-7 11V11l-5.5 13.5-3-15-3 15-5.5-14V25L7 14l2 12zM9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 1.5 4 .5 2.5.5 2.5 9.5 2.5s9 0 9.5-2.5c.5-3 .5-2.5 1.5-4 1-2 2.5-2 2.5-4-8.5-1.5-21-1.5-27 0z' stroke-linecap='round'/%3E%3Cpath fill='none' stroke='%23000' d='M11.5 30c3.5-1 18.5-1 22 0M12 33.5c6-1 15-1 21 0'/%3E%3C/svg%3E",
+  "wR": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath fill='%23fff' stroke='%23000' stroke-width='1.5' stroke-linejoin='round' d='M9 39h27v-3H9v3zM12 36v-4h21v4H12zM11 14V9h4v2h5V9h5v2h5V9h4v5'/%3E%3Cpath fill='%23fff' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M34 14l-3 3H14l-3-3'/%3E%3Cpath fill='%23fff' stroke='%23000' stroke-width='1.5' stroke-linejoin='round' d='M31 17v12.5H14V17'/%3E%3Cpath fill='none' stroke='%23000' d='M31 29.5l1.5 2.5h-20l1.5-2.5M11 14h23'/%3E%3C/svg%3E",
+  "wB": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='%23fff' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zM15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z'/%3E%3Cpath d='M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5' fill='none' stroke-linejoin='miter'/%3E%3C/g%3E%3C/svg%3E",
+  "wN": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath fill='%23fff' stroke='%23000' stroke-width='1.5' d='M 22,10 C 32.5,11 38.5,18 38,39 L 15,39 C 15,30 25,32.5 23,18'/%3E%3Cpath fill='%23fff' stroke='%23000' stroke-width='1.5' d='M 24,18 C 24.38,20.91 18.45,25.37 16,27 C 13,29 13.18,31.34 11,31 C 9.958,30.06 12.41,27.96 11,28 C 10,28 11.19,29.23 10,30 C 9,30 5.997,31 6,26 C 6,24 12,14 12,14 C 12,14 13.89,12.1 14,10.5 C 13.27,9.506 13.5,8.5 13.5,7.5 C 14.5,6.5 16.5,10 16.5,10 L 18.5,10 C 18.5,10 19.28,8.008 21,7 C 22,7 22,10 22,10'/%3E%3Cpath fill='%23000' stroke='none' d='M 9.5 25.5 A 0.5 0.5 0 1 1 8.5,25.5 A 0.5 0.5 0 1 1 9.5 25.5 z'/%3E%3Cpath fill='none' stroke='%23000' stroke-width='1.5' stroke-linejoin='round' d='M 15 15.5 A 0.5 1.5 0 1 1 14,15.5 A 0.5 1.5 0 1 1 15 15.5 z' transform='matrix(0.866,0.5,-0.5,0.866,9.693,-5.173)'/%3E%3C/svg%3E",
+  "wP": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath d='M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z' fill='%23fff' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E",
   
-  "bK": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='none' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22.5 11.625V6M20 8h5' stroke-linejoin='miter' stroke='%23fff'/%3E%3Cpath d='M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5' fill='%23000' stroke-linecap='butt' stroke-linejoin='miter'/%3E%3Cpath d='M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-3.5-7.5-13-10.5-16-4-3 6 5 10.5 5 10.5v7z' fill='%23000'/%3E%3Cpath d='M11.5 30c5.5-3 15.5-3 21 0M11.5 33.5c5.5-3 15.5-3 21 0M11.5 37c5.5-3 15.5-3 21 0' stroke='%23000'/%3E%3C/g%3E%3C/svg%3E",
-  "bQ": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='%23000' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM24.5 7.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM41 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM16 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM33 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0z'/%3E%3Cpath d='M9 26c8.5-1.5 21-1.5 27 0l2-12-7 11V11l-5.5 13.5-3-15-3 15-5.5-14V25L7 14l2 12zM9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 1.5 4 .5 2.5.5 2.5 9.5 2.5s9 0 9.5-2.5c.5-3 .5-2.5 1.5-4 1-2 2.5-2 2.5-4-8.5-1.5-21-1.5-27 0z' stroke-linecap='butt'/%3E%3C/g%3E%3C/svg%3E",
-  "bR": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='%23000' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 39h27v-3H9v3zM12 36v-4h21v4H12zM11 14V9h4v2h5V9h5v2h5V9h4v5' stroke-linecap='butt'/%3E%3Cpath d='M34 14l-3 3H14l-3-3'/%3E%3Cpath d='M31 17v12.5H14V17' stroke-linecap='butt' stroke-linejoin='miter'/%3E%3C/g%3E%3C/svg%3E",
-  "bB": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='none' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg fill='%23000' stroke-linecap='butt'%3E%3Cpath d='M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zM15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z'/%3E%3C/g%3E%3Cpath d='M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5' stroke-linejoin='miter'/%3E%3C/g%3E%3C/svg%3E",
-  "bN": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='none' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M 22,10 C 32.5,11 38.5,18 38,39 L 15,39 C 15,30 25,32.5 23,18' fill='%23000' stroke-linecap='butt'/%3E%3Cpath d='M 24,18 C 24.38,20.91 18.45,25.37 16,27 C 13,29 13.18,31.34 11,31 C 9.958,30.06 12.41,27.96 11,28 C 10,28 11.19,29.23 10,30 C 9,30 5.997,31 6,26 C 6,24 12,14 12,14 C 12,14 13.89,12.1 14,10.5 C 13.27,9.506 13.5,8.5 13.5,7.5 C 14.5,6.5 16.5,10 16.5,10 L 18.5,10 C 18.5,10 19.28,8.008 21,7 C 22,7 22,10 22,10' fill='%23000' stroke-linecap='butt'/%3E%3Cpath d='M 9.5 25.5 A 0.5 0.5 0 1 1 8.5,25.5 A 0.5 0.5 0 1 1 9.5 25.5 z' fill='%23000' stroke-linecap='butt'/%3E%3Cpath d='M 15 15.5 A 0.5 1.5 0 1 1 14,15.5 A 0.5 1.5 0 1 1 15 15.5 z' fill='%23000' transform='matrix(0.866,0.5,-0.5,0.866,9.693,-5.173)'/%3E%3C/g%3E%3C/svg%3E",
-  "bP": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath d='M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z' fill='%23000' fill-rule='evenodd' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+  "bK": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath d='M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5' fill='%23000'/%3E%3Cpath d='M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-3.5-7.5-13-10.5-16-4-3 6 5 10.5 5 10.5v7z' fill='%23000'/%3E%3Cpath fill='none' stroke='%23fff' stroke-width='1.5' d='M22.5 11.63V6M20 8h5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E",
+  "bQ": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath fill='%23000' d='M8 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM24.5 7.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM41 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM16 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM33 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0z'/%3E%3Cpath fill='%23000' d='M9 26c8.5-1.5 21-1.5 27 0l2-12-7 11V11l-5.5 13.5-3-15-3 15-5.5-14V25L7 14l2 12zM9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 1.5 4 .5 2.5.5 2.5 9.5 2.5s9 0 9.5-2.5c.5-3 .5-2.5 1.5-4 1-2 2.5-2 2.5-4-8.5-1.5-21-1.5-27 0z'/%3E%3C/svg%3E",
+  "bR": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath fill='%23000' d='M9 39h27v-3H9v3zM12 36v-4h21v4H12zM11 14V9h4v2h5V9h5v2h5V9h4v5'/%3E%3Cpath fill='%23000' d='M34 14l-3 3H14l-3-3'/%3E%3Cpath fill='%23000' d='M31 17v12.5H14V17'/%3E%3C/svg%3E",
+  "bB": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cg fill='%23000'%3E%3Cpath d='M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zM15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z'/%3E%3C/g%3E%3C/svg%3E",
+  "bN": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath fill='%23000' d='M 22,10 C 32.5,11 38.5,18 38,39 L 15,39 C 15,30 25,32.5 23,18'/%3E%3Cpath fill='%23000' d='M 24,18 C 24.38,20.91 18.45,25.37 16,27 C 13,29 13.18,31.34 11,31 C 9.958,30.06 12.41,27.96 11,28 C 10,28 11.19,29.23 10,30 C 9,30 5.997,31 6,26 C 6,24 12,14 12,14 C 12,14 13.89,12.1 14,10.5 C 13.27,9.506 13.5,8.5 13.5,7.5 C 14.5,6.5 16.5,10 16.5,10 L 18.5,10 C 18.5,10 19.28,8.008 21,7 C 22,7 22,10 22,10'/%3E%3C/svg%3E",
+  "bP": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'%3E%3Cpath d='M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z' fill='%23000'/%3E%3C/svg%3E"
 };
 
 function pieceIconURI(p) { return PIECE_URIS[p] || PIECE_URIS["wP"]; }
@@ -109,7 +109,7 @@ $(document).ready(function() {
         let fullPGN = pgnGame.pgn();
         $('#movesHistory').text(fullPGN || (currentLang === 'ar' ? 'لا توجد نقلات بعد' : 'No moves yet'));
         let movesBox = document.getElementById("movesHistory");
-        if (movesBox) movesBox.parentElement.scrollTop = movesBox.parentElement.scrollHeight;
+        if (movesBox) { movesBox.scrollTop = movesBox.scrollHeight; }
     }
 
     function updatePlayerLabels(d) {
@@ -127,6 +127,7 @@ $(document).ready(function() {
         $('#langToggleBtn').text(lang === 'ar' ? 'English' : 'العربية');
         
         document.title = translations[lang].siteTitle;
+        $('#mainTitle').text(translations[lang].siteTitle);
         
         $('[data-key]').each(function() {
             var key = $(this).data('key');
@@ -145,7 +146,6 @@ $(document).ready(function() {
         $('body').removeClass('theme-modern theme-chesscom theme-royal theme-classic theme-forest theme-grayscale').addClass('theme-' + theme);
         localStorage.setItem('chessTheme', theme); $('#themeChoice').val(theme);
     }
-    
     function applyBoardStyle(style) {
         $('#board').removeClass('board-style-solid board-style-hatched').addClass('board-style-' + style);
         localStorage.setItem('chessBoardStyle', style); $('#boardStyleChoice').val(style);
@@ -229,20 +229,28 @@ $(document).ready(function() {
         startHeartbeat();
     }
 
-    /* إصلاح القطع المأكولة لتطابق شكل الرقعة وتظهر بدقة */
+    /* إصلاح جلب القطع المأكولة بدقة */
     function updateCapturedPieces() {
         if (!game) return;
         const pVals = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
-        const initC = { w: { p: 8, n: 2, b: 2, r: 2, q: 1 }, b: { p: 8, n: 2, b: 2, r: 2, q: 1 } };
+        const initC = { p: 8, n: 2, b: 2, r: 2, q: 1 };
         let curC = { w: { p: 0, n: 0, b: 0, r: 0, q: 0 }, b: { p: 0, n: 0, b: 0, r: 0, q: 0 } };
         let score = { w: 0, b: 0 };
-        let brd = game.board();
-        for (let r = 0; r < 8; r++) { for (let c = 0; c < 8; c++) { let pc = brd[r][c]; if (pc) { curC[pc.color][pc.type]++; score[pc.color] += pVals[pc.type]; } } }
         
-        let capByW = []; let capByB = [];
+        let brd = game.board();
+        for (let r = 0; r < 8; r++) { 
+            for (let c = 0; c < 8; c++) { 
+                let pc = brd[r][c]; 
+                if (pc) { curC[pc.color][pc.type]++; score[pc.color] += pVals[pc.type]; } 
+            } 
+        }
+        
+        let capByW = []; // قطع الخصم الأسود التي أكلها الأبيض
+        let capByB = []; // قطع الخصم الأبيض التي أكلها الأسود
+        
         ['q', 'r', 'b', 'n', 'p'].forEach(type => {
-            let bLost = initC.b[type] - curC.b[type];
-            let wLost = initC.w[type] - curC.w[type];
+            let wLost = initC[type] - curC.w[type];
+            let bLost = initC[type] - curC.b[type];
             for (let i = 0; i < bLost; i++) capByW.push({ color: 'b', type: type });
             for (let i = 0; i < wLost; i++) capByB.push({ color: 'w', type: type });
         });
@@ -261,7 +269,11 @@ $(document).ready(function() {
         $(containerId).html(html);
     }
 
-    /* إصلاح إضافة مربعات الحركة (نقاط التحديد) */
+    function highlightLastMove(from, to) {
+        $('#board .square-55d63').removeClass('highlight-last-move');
+        if (from && to) { $('#board .square-' + from).addClass('highlight-last-move'); $('#board .square-' + to).addClass('highlight-last-move'); }
+    }
+
     function clearHighlights() { $('#board .square-55d63').removeClass('highlight legal-move legal-move-capture'); }
 
     function highlightLegalMoves(square) {
@@ -272,11 +284,6 @@ $(document).ready(function() {
             var ts = $('#board .square-' + moves[i].to);
             if (moves[i].captured) ts.addClass('legal-move-capture'); else ts.addClass('legal-move');
         }
-    }
-
-    function highlightLastMove(from, to) {
-        $('#board .square-55d63').removeClass('highlight-last-move');
-        if (from && to) { $('#board .square-' + from).addClass('highlight-last-move'); $('#board .square-' + to).addClass('highlight-last-move'); }
     }
 
     function processLocalMove(move) {
@@ -322,7 +329,10 @@ $(document).ready(function() {
         $('#promotionModal').fadeOut(200); pendingPromotionMove = null; clearHighlights();
     });
 
-    function resetActionButtons() { $('#drawOfferBtn').prop('disabled', false).text(translations[currentLang].btnDraw); $('#modalRematchBtn').prop('disabled', false).text(translations[currentLang].btnRematch); }
+    function resetActionButtons() { 
+        $('#drawOfferBtn').prop('disabled', false).text(translations[currentLang].btnDraw); 
+        $('#modalRematchBtn').prop('disabled', false).text(translations[currentLang].btnRematch); 
+    }
 
     async function enterRoom(rawRoom) {
         if (!/^\d{3,6}$/.test(rawRoom)) { $('#roomError').addClass('visible'); return; }
@@ -443,18 +453,33 @@ $(document).ready(function() {
                 if (board) board.draggable(gameStarted && isMyTurn);
             } else if (d.lastMove && d.status === 'playing') { highlightLastMove(d.lastMove.from, d.lastMove.to); }
 
-            if (d.action && d.action.type && d.action.by !== myPlayerColor) {
+            /* دمج وتوجيه أزرار الرفض والموافقة لإعادة التحدي داخل النافذة النهائية */
+            if (d.action && d.action.type) {
                 if (d.action.state === 'offered') {
-                    let msg = d.action.type === 'rematch' ? translations[currentLang].msgRematchOffer : translations[currentLang].msgDrawOffer;
-                    $('#interactiveMsg').text(msg); $('#acceptActionBtn').data('actionType', d.action.type); $('#declineActionBtn').data('actionType', d.action.type);
-                    $('#interactiveOverlay').stop(true, true).fadeIn(200);
+                    if (d.action.type === 'rematch' && d.action.by !== myPlayerColor) {
+                        $('#modalNormalActions').hide();
+                        $('#modalRematchOfferActions').show();
+                    } else if (d.action.type === 'draw' && d.action.by !== myPlayerColor) {
+                        let msg = translations[currentLang].msgDrawOffer;
+                        $('#interactiveMsg').text(msg); 
+                        $('#acceptActionBtn').data('actionType', 'draw'); 
+                        $('#declineActionBtn').data('actionType', 'draw');
+                        $('#interactiveOverlay').stop(true, true).fadeIn(200);
+                    }
                 } else if (d.action.state === 'declined') {
-                    $('#interactiveOverlay').fadeOut(200); resetActionButtons(); setTimeout(() => activeRoomRef.update({ action: null }), 500);
+                    $('#interactiveOverlay').fadeOut(200); 
+                    resetActionButtons(); 
+                    $('#modalNormalActions').show();
+                    $('#modalRematchOfferActions').hide();
+                    setTimeout(() => activeRoomRef.update({ action: null }), 500);
                 }
             }
 
             if (d.action && d.action.state === 'accepted') {
                 $('#interactiveOverlay').fadeOut(200);
+                $('#modalNormalActions').show();
+                $('#modalRematchOfferActions').hide();
+
                 if (d.action.type === 'draw') { activeRoomRef.update({ status: 'draw_agreed', action: null }); }
                 else if (d.action.type === 'rematch') {
                     isGameEndHandled = false; if (abandonTimer) { clearInterval(abandonTimer); abandonTimer = null; }
@@ -496,8 +521,10 @@ $(document).ready(function() {
     $('#drawOfferBtn').click(function() { if (!gameStarted) return; activeRoomRef.update({ action: { type: 'draw', state: 'offered', by: myPlayerColor } }); $(this).prop('disabled', true).text('...'); });
     $('#modalRematchBtn').click(function() { activeRoomRef.update({ action: { type: 'rematch', state: 'offered', by: myPlayerColor } }); $(this).prop('disabled', true).text('...'); });
 
-    $('#acceptActionBtn').click(function() {
-        let actionType = $(this).data('actionType'); let updateData = { action: { type: actionType, state: 'accepted', by: myPlayerColor } };
+    /* ربط أزرار الرد على التحدي داخل النافذة */
+    $('#acceptRematchBtn, #acceptActionBtn').click(function() {
+        let actionType = $(this).data('actionType') || 'rematch'; 
+        let updateData = { action: { type: actionType, state: 'accepted', by: myPlayerColor } };
         if (actionType === 'rematch') {
             let minutes = parseInt($('#timeMinutes').val()) || 3;
             updateData.fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'; updateData.pgn = ''; updateData.lastMove = null;
@@ -506,7 +533,11 @@ $(document).ready(function() {
         $('#interactiveOverlay').fadeOut(200); activeRoomRef.update(updateData);
     });
 
-    $('#declineActionBtn').click(function() { let actionType = $(this).data('actionType'); $('#interactiveOverlay').fadeOut(200); activeRoomRef.update({ action: { type: actionType, state: 'declined', by: myPlayerColor } }); });
+    $('#declineRematchBtn, #declineActionBtn').click(function() { 
+        let actionType = $(this).data('actionType') || 'rematch'; 
+        $('#interactiveOverlay').fadeOut(200); 
+        activeRoomRef.update({ action: { type: actionType, state: 'declined', by: myPlayerColor } }); 
+    });
 
     $('#modalHomeBtn').click(function() { stopTimer(); stopHeartbeat(); $('#gameArea').hide(); $('#endGameModal').hide(); $('#disconnectBanner').hide(); $('#lobby').fadeIn(300); localStorage.removeItem('chessActiveRoom'); if (activeRoomRef) activeRoomRef.off(); if (myPresenceRef) myPresenceRef.onDisconnect().cancel(); });
 
@@ -519,18 +550,12 @@ $(document).ready(function() {
 
     function showToast(msg) { let t = $('#toast'); t.text(msg).addClass('visible'); clearTimeout(t.data('hideTimer')); let handle = setTimeout(() => t.removeClass('visible'), 2500); t.data('hideTimer', handle); }
 
-    /* إصلاح زر المشاركة بقوة ووضوح */
     $('#lobbyShareBtn, #shareRoomBtn').click(async function() {
         let roomVal = $('#roomId').val().trim();
         if (!roomVal) { showToast(translations[currentLang].msgRoomInvalid); return;}
-        let shareUrl = window.location.origin + window.location.pathname + '?room=' + roomVal;
-        
-        try {
-            await navigator.clipboard.writeText(shareUrl);
-            showToast(translations[currentLang].msgShareCopied);
-        } catch(err) {
-            fallbackCopy(shareUrl);
-        }
+        let shareUrl = window.location.href.split('?')[0] + '?room=' + roomVal;
+        try { await navigator.clipboard.writeText(shareUrl); showToast(translations[currentLang].msgShareCopied); } 
+        catch(err) { fallbackCopy(shareUrl); }
     });
 
     function checkEndGameConditions() {
@@ -549,6 +574,9 @@ $(document).ready(function() {
         let titleTxt = translations[currentLang].titleDraw;
         if (winnerColor === 'w') { titleTxt = translations[currentLang].titleWinWhite; } else if (winnerColor === 'b') { titleTxt = translations[currentLang].titleWinBlack; }
         $('#endGameTitle').text(titleTxt); $('#endGameReason').text(reasonTxt); $('#endGameMoves').text(Math.ceil(game.history().length / 2));
+        
+        $('#modalNormalActions').show();
+        $('#modalRematchOfferActions').hide();
         setTimeout(() => { $('#endGameModal').fadeIn(300); }, 300);
     }
 
@@ -583,4 +611,3 @@ $(document).ready(function() {
 
     function onSnapEnd() { if (board) board.position(game.fen(), false); }
 });
-
