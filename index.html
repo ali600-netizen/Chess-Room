@@ -4,16 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>غرفة الشطرنج | Chess Room</title>
-    <meta name="description" content="غرفة شطرنج مباشرة مع الأصدقاء — أنشئ غرفة، شارك الرمز، وابدأ اللعب فوراً. Real-time multiplayer chess rooms.">
-    <meta property="og:title" content="Chess Room — Mosul Chess">
-    <meta property="og:description" content="غرفة شطرنج مباشرة مع الأصدقاء — أنشئ غرفة وشارك الرمز وابدأ اللعب فوراً.">
-    <meta property="og:type" content="website">
+    <meta name="description" content="غرفة شطرنج مباشرة مع الأصدقاء. Real-time multiplayer chess rooms.">
     <link rel="icon" type="image/jpeg" href="logo.jpg">
 
     <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&family=Cairo:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     
-    <link rel="stylesheet" href="style.css?v=17">
+    <!-- تحديث الكاش -->
+    <link rel="stylesheet" href="style.css?v=18">
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -22,6 +20,7 @@
 <body>
 
     <div class="container">
+        <!-- شريط التحكم العلوي -->
         <div class="top-bar">
             <div class="top-bar-controls">
                 <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound">
@@ -32,7 +31,13 @@
                     <option value="royal" data-key="themeRoyal">ملكي وفضي</option>
                     <option value="modern" data-key="themeModern">داكن حديث</option>
                     <option value="forest" data-key="themeForest">خشبي أخضر</option>
+                    <option value="grayscale" data-key="themeGray">رصاصي وأسود</option>
                     <option value="classic" data-key="themeChesscom">فاتح كلاسيكي</option>
+                </select>
+                <!-- خيار شكل المربعات الجديد -->
+                <select id="boardStyleChoice" class="lang-btn" style="padding: 0 10px;">
+                    <option value="solid" data-key="boardSolid">مربعات سادة</option>
+                    <option value="hatched" data-key="boardHatched">مربعات مخططة</option>
                 </select>
             </div>
             <button id="langToggleBtn" class="lang-btn">English</button>
@@ -43,14 +48,13 @@
         </div>
 
         <div id="lobby" class="panel fade-in">
-            
             <div class="form-group">
                 <input type="text" id="userName" class="field-input w-full text-center" maxlength="16" placeholder="..." data-key="phName">
             </div>
 
             <div class="form-group room-input-group">
-                <input type="text" id="roomId" inputmode="numeric" maxlength="6" class="field-input text-center" placeholder="رقم الغرفة" style="font-size: 1.8rem; font-family: var(--font-mono); letter-spacing: 4px;">
-                <button id="lobbyShareBtn" class="icon-btn" style="background: var(--primary-color); color: #fff; border:none;" title="نسخ رابط الغرفة">
+                <input type="text" id="roomId" inputmode="numeric" maxlength="6" class="field-input text-center" placeholder="رقم الغرفة">
+                <button id="lobbyShareBtn" class="icon-btn share-btn" title="نسخ رابط الغرفة">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                 </button>
             </div>
@@ -109,7 +113,7 @@
                 <div id="disconnectBanner" class="disconnect-banner">
                     <span data-key="msgDisconnected">انقطع الخصم... استسلام بعد</span> <span id="abandonSec" class="sec">30</span>
                 </div>
-                <div id="board"></div>
+                <div id="board" class="board-style-solid"></div>
                 
                 <div id="interactiveOverlay" class="status-overlay interactive-layer" style="display: none;">
                     <p id="interactiveMsg" class="overlay-text"></p>
@@ -170,25 +174,25 @@
         </div>
 
         <div id="promotionModal" class="modal-overlay" style="display: none; z-index: 400;">
-            <div class="modal-content pop-in" style="max-width: 300px; padding: 25px;">
-                <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; border:none;" data-key="promptPromotion">اختر الترقية</h3>
-                <div class="promotion-pieces" style="display: flex; justify-content: space-around; gap: 10px;">
+            <div class="modal-content pop-in" style="max-width: 320px; padding: 25px;">
+                <h3 style="margin-top: 0; margin-bottom: 25px; font-size: 1.4rem; border:none;" data-key="promptPromotion">اختر الترقية</h3>
+                <div class="promotion-pieces" style="display: flex; justify-content: space-around; gap: 15px;">
                     <button class="promo-piece" data-piece="q"><img alt="Queen"></button>
                     <button class="promo-piece" data-piece="n"><img alt="Knight"></button>
                     <button class="promo-piece" data-piece="r"><img alt="Rook"></button>
                     <button class="promo-piece" data-piece="b"><img alt="Bishop"></button>
                 </div>
-                <button id="cancelPromoBtn" class="btn btn-secondary" style="margin-top: 20px;" data-key="btnCancelPromo">إلغاء</button>
+                <button id="cancelPromoBtn" class="btn btn-secondary" style="margin-top: 25px;" data-key="btnCancelPromo">إلغاء</button>
             </div>
         </div>
 
     </div>
-
     <div id="toast" class="toast"></div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="script.js?v=17"></script>
+    <script src="script.js?v=18"></script>
 </body>
 </html>
+ 
