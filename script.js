@@ -1,3 +1,4 @@
+
 const firebaseConfig = {
     apiKey: "AIzaSyCWL3DohN_BVmwlDjLYP_UohoKqnw4ylzU",
     authDomain: "chessroom-ca23f.firebaseapp.com",
@@ -89,7 +90,7 @@ $(document).ready(function() {
     var isWaiting = false, isCountingDown = false;
     var abandonTimer = null, abandonSeconds = 30;
     var currentRoomId = null, myPlayerColor = 'white', activeRoomRef = null;
-    var isGameEndHandled = false; var pendingPromotionMove = null;
+    var isGameEndHandled = false; var pendingPromotionMove = null; var materialScore = { w: 0, b: 0 };
 
     auth.signInAnonymously().catch(e => console.error("Auth:", e));
     auth.onAuthStateChanged(user => {
@@ -145,23 +146,102 @@ $(document).ready(function() {
         // إصلاح: بعض متصفحات الموبايل لا تُحدّث النص الظاهر في القائمة المغلقة فوراً
         // بعد تغيير نص الخيار المحدد، فنجبر إعادة الرسم بإعادة ضبط القيمة الحالية
         $('select').each(function() { $(this).val($(this).val()); });
+        if (typeof syncAllSelectDisplays === 'function') syncAllSelectDisplays();
+        if (typeof syncPickerDisplays === 'function') syncPickerDisplays();
         if (!myUid) { $('#createBtn').text(lang === 'ar' ? 'جاري الاتصال...' : 'Connecting...'); }
         if (lastRoomSnapshot) updatePlayerLabels(lastRoomSnapshot);
         if (board && $('#gameArea').is(':visible')) { setTimeout(function() { if (board) board.resize(); }, 50); }
     }
 
     function applyTheme(theme) {
+        currentTheme = theme;
         $('body').removeClass('theme-modern theme-chesscom theme-royal theme-classic theme-forest theme-grayscale').addClass('theme-' + theme);
         localStorage.setItem('chessTheme', theme); $('#themeChoice').val(theme);
+        syncPickerDisplays();
     }
     function applyBoardStyle(style) {
+        currentBoardStyle = style;
         $('#board').removeClass('board-style-solid board-style-hatched').addClass('board-style-' + style);
         localStorage.setItem('chessBoardStyle', style); $('#boardStyleChoice').val(style);
+        syncPickerDisplays();
     }
 
+    // إصلاح: مزامنة النص الظاهر لكل قائمة منسدلة عند أي تغيير (تبديل لغة، تغيير قيمة، تحميل أولي)
+    // لأن العنصر الحقيقي أصبح شفافاً يغطي الصف بالكامل، والنص الظاهر عنصر منفصل يجب تحديثه يدوياً
+    function syncSelectDisplay(selectEl) {
+        let $sel = $(selectEl);
+        let $display = $sel.closest('.form-group').find('.value-text').first();
+        $display.text($sel.find('option:selected').text());
+    }
+    function syncAllSelectDisplays() {
+        $('#timeMinutes, #timeIncrement, #colorChoice').each(function() { syncSelectDisplay(this); });
+    }
+
+    const THEME_DEFS = [
+        { id: 'grayscale', key: 'themeGray', light: '#f1f5f9', dark: '#64748b' },
+        { id: 'royal', key: 'themeRoyal', light: '#F4F1EA', dark: '#1A2E73' },
+        { id: 'modern', key: 'themeModern', light: '#cbd5e1', dark: '#475569' },
+        { id: 'forest', key: 'themeForest', light: '#ebecd0', dark: '#487068' },
+        { id: 'classic', key: 'themeChesscom', light: '#ebecd0', dark: '#739552' }
+    ];
+    const BOARD_STYLE_DEFS = [ { id: 'solid', key: 'boardSolid' }, { id: 'hatched', key: 'boardHatched' } ];
+
+    function miniBoardHTML(light, dark, hatched) {
+        let darkStyle = hatched
+            ? `background-color:${dark};background-image:repeating-linear-gradient(45deg, rgba(0,0,0,0.35) 0, rgba(0,0,0,0.35) 1.5px, transparent 1.5px, transparent 5px);`
+            : `background-color:${dark};`;
+        let cells = [light, dark, dark, light];
+        return cells.map(c => `<span style="background-color:${c};${c === dark ? darkStyle : ''}"></span>`).join('');
+    }
+
+    function syncPickerDisplays() {
+        let theme = THEME_DEFS.find(t => t.id === currentTheme) || THEME_DEFS[0];
+        $('#themeSwatchPreview').html(miniBoardHTML(theme.light, theme.dark, false));
+        $('#themeChoiceDisplay').text(translations[currentLang][theme.key]);
+
+        let isHatched = currentBoardStyle === 'hatched';
+        $('#boardStyleSwatchPreview').html(miniBoardHTML(theme.light, theme.dark, isHatched));
+        let styleDef = BOARD_STYLE_DEFS.find(s => s.id === currentBoardStyle) || BOARD_STYLE_DEFS[0];
+        $('#boardStyleChoiceDisplay').text(translations[currentLang][styleDef.key]);
+    }
+
+    function buildThemeGrid() {
+        let html = '';
+        THEME_DEFS.forEach(t => {
+            let active = t.id === currentTheme ? ' active' : '';
+            html += `<div class="swatch-card${active}" data-theme="${t.id}">
+                <div class="swatch-board">${miniBoardHTML(t.light, t.dark, false)}</div>
+                <span class="swatch-name">${translations[currentLang][t.key]}</span>
+            </div>`;
+        });
+        $('#themePickerGrid').html(html);
+    }
+    function buildBoardStyleGrid() {
+        let theme = THEME_DEFS.find(t => t.id === currentTheme) || THEME_DEFS[0];
+        let html = '';
+        BOARD_STYLE_DEFS.forEach(s => {
+            let active = s.id === currentBoardStyle ? ' active' : '';
+            html += `<div class="swatch-card${active}" data-style="${s.id}">
+                <div class="swatch-board">${miniBoardHTML(theme.light, theme.dark, s.id === 'hatched')}</div>
+                <span class="swatch-name">${translations[currentLang][s.key]}</span>
+            </div>`;
+        });
+        $('#boardStylePickerGrid').html(html);
+    }
+
+    $('#themePickerBtn').click(function() { buildThemeGrid(); $('#themePickerModal').fadeIn(150); });
+    $('#boardStylePickerBtn').click(function() { buildBoardStyleGrid(); $('#boardStylePickerModal').fadeIn(150); });
+    $(document).on('click', '#themePickerGrid .swatch-card', function() {
+        applyTheme($(this).data('theme')); $('#themePickerModal').fadeOut(150);
+    });
+    $(document).on('click', '#boardStylePickerGrid .swatch-card', function() {
+        applyBoardStyle($(this).data('style')); $('#boardStylePickerModal').fadeOut(150);
+    });
+    $('.picker-close').click(function() { $('.picker-overlay').fadeOut(150); });
+    $('.picker-overlay').click(function(e) { if (e.target === this) $(this).fadeOut(150); });
+
     $('#langToggleBtn').click(function() { applyLanguage(currentLang === 'en' ? 'ar' : 'en'); });
-    $('#themeChoice').change(function() { applyTheme($(this).val()); });
-    $('#boardStyleChoice').change(function() { applyBoardStyle($(this).val()); });
+    $('#timeMinutes, #timeIncrement, #colorChoice').change(function() { syncSelectDisplay(this); });
 
     $('#soundOffIcon').toggle(!sfx.enabled); $('#soundOnIcon').toggle(sfx.enabled);
     $('#soundToggleBtn').click(function() {
@@ -169,6 +249,7 @@ $(document).ready(function() {
     });
 
     applyLanguage(currentLang); applyTheme(currentTheme); applyBoardStyle(currentBoardStyle);
+    syncAllSelectDisplays(); syncPickerDisplays();
 
     document.getElementById('board') && document.getElementById('board').addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
     $(document).on('contextmenu', '#board', function(e) { e.preventDefault(); });
@@ -266,6 +347,7 @@ $(document).ready(function() {
         });
         
         let wAdv = score.w - score.b; let bAdv = score.b - score.w;
+        materialScore.w = score.w; materialScore.b = score.b;
         renderCaptured('w', capByW, wAdv); renderCaptured('b', capByB, bAdv);
     }
 
@@ -583,8 +665,22 @@ $(document).ready(function() {
         if (!winnerColor) { sfx.play('draw'); } else if (winnerColor === myPlayerColor.charAt(0)) { sfx.play('victory'); } else { sfx.play('defeat'); }
         let titleTxt = translations[currentLang].titleDraw;
         if (winnerColor === 'w') { titleTxt = translations[currentLang].titleWinWhite; } else if (winnerColor === 'b') { titleTxt = translations[currentLang].titleWinBlack; }
-        $('#endGameTitle').text(titleTxt); $('#endGameReason').text(reasonTxt); $('#endGameMoves').text(Math.ceil(game.history().length / 2));
-        
+        $('#endGameTitle').text(titleTxt); $('#endGameReason').text(reasonTxt);
+
+        // إصلاح: عرض أفضلية الفائز المادية واسمه بدل رقم النقلات العشوائي بلا سياق،
+        // ويُحتفظ بعرض عدد النقلات فقط في حالة التعادل أو فوز بلا أفضلية مادية فعلية
+        let loserColor = winnerColor === 'w' ? 'b' : 'w';
+        let winnerAdv = winnerColor ? (materialScore[winnerColor] - materialScore[loserColor]) : 0;
+        if (winnerColor && winnerAdv > 0) {
+            let winnerName = (lastRoomSnapshot && lastRoomSnapshot[winnerColor + 'Name'])
+                || (winnerColor === myPlayerColor.charAt(0) ? translations[currentLang].playerYou : translations[currentLang].playerOpponent);
+            $('#endGameMoves').text('+' + winnerAdv);
+            $('#endGameStatLabel').text(winnerName).show();
+        } else {
+            $('#endGameMoves').text(Math.ceil(game.history().length / 2));
+            $('#endGameStatLabel').text(translations[currentLang].labelMoves).show();
+        }
+
         $('#modalNormalActions').show();
         $('#modalRematchOfferActions').hide();
         setTimeout(() => { $('#endGameModal').fadeIn(300); }, 300);
