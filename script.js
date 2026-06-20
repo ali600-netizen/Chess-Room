@@ -46,7 +46,12 @@ const PIECE_URIS = {
 
 
 
-function pieceIconURI(p) { return PIECE_URIS[p] || PIECE_URIS["wP"]; }
+function pieceIconURI(p) {
+    if (!p) return PIECE_URIS["wP"];
+    let color = p.charAt(0).toLowerCase();
+    let type = p.charAt(1).toUpperCase();
+    return PIECE_URIS[color + type] || PIECE_URIS["wP"];
+}
 
 $(document).ready(function() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -137,6 +142,9 @@ $(document).ready(function() {
                 else $(this).html(translations[lang][key]); 
             }
         });
+        // إصلاح: بعض متصفحات الموبايل لا تُحدّث النص الظاهر في القائمة المغلقة فوراً
+        // بعد تغيير نص الخيار المحدد، فنجبر إعادة الرسم بإعادة ضبط القيمة الحالية
+        $('select').each(function() { $(this).val($(this).val()); });
         if (!myUid) { $('#createBtn').text(lang === 'ar' ? 'جاري الاتصال...' : 'Connecting...'); }
         if (lastRoomSnapshot) updatePlayerLabels(lastRoomSnapshot);
         if (board && $('#gameArea').is(':visible')) { setTimeout(function() { if (board) board.resize(); }, 50); }
@@ -193,6 +201,8 @@ $(document).ready(function() {
     function stopTimer() { if (timerInterval) clearInterval(timerInterval); $('.timer').removeClass('active'); }
 
     function runCountdown() {
+        isCountingDown = true;
+        if (!lastRoomSnapshot || lastRoomSnapshot.playersCount !== 2) { isCountingDown = false; return; }
         $('#waitingOverlay').fadeOut(200); $('#interactiveOverlay').fadeOut(200);
         let count = 3; $('#countdownOverlay').text(count).fadeIn(200); sfx.play('count3');
         let countInt = setInterval(() => {
