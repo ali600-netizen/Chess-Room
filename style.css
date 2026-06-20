@@ -1,3 +1,4 @@
+
 /* ===================================================================
    Chess Room — Premium UI, Optimized Scaling & Theming
    =================================================================== */
@@ -72,16 +73,36 @@ body {
 .logo-title { font-family: var(--font-display); font-weight: 700; font-size: 1.8rem; margin: 0; }
 
 .panel { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; box-shadow: var(--panel-shadow); margin-bottom: 10px; }
-.form-group { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(0,0,0,0.03); border-radius: 10px; margin-bottom: 8px; }
+.form-group { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(0,0,0,0.03); border-radius: 10px; margin-bottom: 8px; }
 .form-row { display: flex; gap: 8px; }
 .half-width { flex: 1; }
-.form-group label { color: var(--text-muted); font-weight: 700; font-size: 0.9rem; }
+.form-group label { color: var(--text-muted); font-weight: 700; font-size: 0.9rem; pointer-events: none; }
+.form-group.picker-trigger { width: 100%; border: none; cursor: pointer; font-family: var(--font-body); text-align: inherit; -webkit-appearance: none; appearance: none; }
+.value-display { display: flex; align-items: center; gap: 6px; pointer-events: none; }
+.value-display .value-text { font-size: 1rem; font-weight: 700; color: var(--text-main); }
+.value-display .chevron { width: 16px; height: 16px; color: var(--text-muted); opacity: 0.7; flex-shrink: 0; }
+.value-display .swatch-preview { display: inline-grid; grid-template-columns: 1fr 1fr; width: 22px; height: 22px; border-radius: 5px; overflow: hidden; border: 1px solid var(--border-color); flex-shrink: 0; }
+.value-display .swatch-preview span { display: block; }
+.form-group select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; margin: 0; padding: 0; border: none; cursor: pointer; z-index: 5; }
 select, input[type="text"] { background: transparent; border: none; color: var(--text-main); outline: none; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: var(--font-body); }
 input.w-full { width: 100%; }
 .text-center { text-align: center !important; }
 body[dir="ltr"] select { text-align: right; }
 body[dir="rtl"] select { text-align: left; }
 select option { background-color: var(--bg-color); color: var(--text-main); }
+
+.picker-overlay { position: fixed; inset: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: flex-end; backdrop-filter: blur(3px); z-index: 500; }
+.picker-sheet { background: var(--panel-bg); width: 100%; max-width: 460px; border-radius: 20px 20px 0 0; padding: 20px; padding-bottom: max(20px, env(safe-area-inset-bottom)); box-shadow: 0 -10px 30px rgba(0,0,0,0.3); animation: slideUp 0.25s ease; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.picker-sheet h3 { margin: 0 0 14px 0; font-family: var(--font-display); font-size: 1.3rem; text-align: center; }
+.picker-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+.swatch-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 8px; border-radius: 14px; border: 2px solid var(--border-color); background: rgba(0,0,0,0.02); cursor: pointer; transition: all 0.15s; }
+.swatch-card:active { transform: scale(0.96); }
+.swatch-card.active { border-color: var(--primary-color); background: rgba(0,0,0,0.05); box-shadow: 0 0 0 2px var(--primary-color) inset; }
+.swatch-card .swatch-board { display: grid; grid-template-columns: repeat(4, 1fr); width: 64px; height: 64px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+.swatch-card .swatch-board span { display: block; }
+.swatch-card .swatch-name { font-size: 0.85rem; font-weight: 700; color: var(--text-main); text-align: center; }
+.picker-close { width: 100%; }
 
 .room-input-group { border: 2px solid var(--border-color); background: var(--bg-color); padding: 4px 8px; border-radius: 12px; }
 .room-input-group input { width: 100%; color: var(--text-main); font-size: 1.6rem !important; font-family: var(--font-mono); letter-spacing: 2px;}
@@ -164,7 +185,10 @@ body[dir="rtl"] .captured-piece { margin-left: -6px; margin-right: 0; }
 .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; backdrop-filter: blur(3px);}
 .modal-content { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; text-align: center; width: 90%; max-width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);}
 .modal-content h2 { margin: 0 0 10px 0; font-size: 1.8rem; font-family: var(--font-display); }
-.stat-value { font-size: 2rem; font-weight: 700; color: var(--primary-color); font-family: var(--font-mono); }
+.stats-row { display: flex; justify-content: center; margin: 10px 0; }
+.stat-box { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.stat-value { font-size: 2rem; font-weight: 700; color: var(--primary-color); font-family: var(--font-mono); direction: ltr; unicode-bidi: isolate; }
+.stat-label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
 .modal-actions { display: flex; flex-direction: column; gap: 8px;}
 .promo-piece { width: 45px; background: transparent; border: none; cursor: pointer; transition: transform 0.2s;}
 .promo-piece:active { transform: scale(0.9); }
@@ -173,3 +197,4 @@ body[dir="rtl"] .captured-piece { margin-left: -6px; margin-right: 0; }
 .connection-error { display: none; flex-direction: column; gap: 8px; align-items: center; margin-top:8px; }
 .connection-error.visible { display: flex; }
  
+
